@@ -7,6 +7,10 @@
 #include <vector>
 #pragma comment(lib, "libmysql.lib")
 
+#ifndef ExportDLL
+#define ExportDLL __declspec(dllexport)
+#endif
+
 namespace db
 {
 	using MySQLRow = std::vector<std::string>;
@@ -28,17 +32,17 @@ namespace db
 	class MySQL
 	{
 	public:
-		MySQL();
-		~MySQL();
+		ExportDLL MySQL();
+		ExportDLL ~MySQL();
 
-		bool Connect(const char *host, int port,
-					 const char *user,
-					 const char *password,
-					 const char *database);
-		const char *Error();
-		unsigned int Errno();
-		MySQLResult Query(const char *command);
-		MySQLExecRes Execute(const char *command);
+		ExportDLL bool Connect(const char *host, int port,
+							   const char *user,
+							   const char *password,
+							   const char *database);
+		ExportDLL const char *Error();
+		ExportDLL unsigned int Errno();
+		ExportDLL MySQLResult Query(const char *command);
+		ExportDLL MySQLExecRes Execute(const char *command);
 
 	private:
 		MYSQL mysql;
