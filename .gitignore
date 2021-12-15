@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+/*.pdb
+/.vscode
+/main.cpp
+/main.exp
+/main.ilk
