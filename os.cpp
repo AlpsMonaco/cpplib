@@ -2,14 +2,6 @@
 
 namespace os
 {
-	// template <typename FuncType>
-	// struct defer
-	// {
-	// 	FuncType func;
-	// 	defer(FuncType func) { this->func = func; }
-	// 	~defer() { this->func(); };
-	// };
-
 	ExecuteResult Execute(const std::string &s)
 	{
 		std::string cmd = s;
@@ -29,7 +21,6 @@ namespace os
 		}
 		return ExecuteResult{pclose(file), std::move(cmd)};
 	}
-
 	ExecuteResult Execute(const char *cmd) { return Execute(std::string(cmd)); }
 	bool IsPathExist(const char *path) { return access(path, 0) == 0; }
 	bool IsDirExist(const char *dirPath) { return IsPathExist(dirPath); }
@@ -37,13 +28,32 @@ namespace os
 	bool IsFileExist(const char *filePath) { return IsPathExist(filePath); }
 	bool IsFileExist(std::string &filePath) { return IsPathExist(filePath.c_str()); }
 
-	// bool MakeDir(const char *dirPath)
-	// {
-	// 	char *buffer = (char *)malloc(strlen(dirPath) + 1);
-	// }
+	bool MakeDir(const char *dirPath)
+	{
+		char *buffer = (char *)malloc(strlen(dirPath) + 1);
+		strcpy(buffer, dirPath);
+		int index = 0;
+		while (*dirPath++ != '\0')
+		{
+			if (*dirPath == '/' || *dirPath == '\\')
+			{
+				buffer[index + 1] = '\0';
+				if (!IsDirExist(buffer))
+					if (mkdir(buffer) != 0)
+						return false;
+				buffer[index + 1] = '/';
+			}
+			index++;
+		}
+		index = 0;
+		if (!IsDirExist(buffer))
+			index = mkdir(buffer);
+		return index == 0;
+	}
 
-	// bool MakeDir(std::string &dirPath)
-	// {
-	// }
+	bool MakeDir(std::string &dirPath)
+	{
+		return MakeDir(dirPath.c_str());
+	}
 
 }

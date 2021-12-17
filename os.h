@@ -6,10 +6,6 @@
 #include <io.h>
 #include <direct.h>
 
-#ifndef ExportDLL
-#define ExportDLL __declspec(dllexport)
-#endif
-
 #ifdef _WIN32
 #define popen _popen
 #define pclose _pclose
@@ -21,17 +17,17 @@ namespace os
 	{
 	public:
 		int code;
-		std::string result;
+		std::string output;
 	};
 
-	ExportDLL ExecuteResult Execute(const char *cmd);
-	ExportDLL ExecuteResult Execute(const std::string &cmd);
-	ExportDLL bool IsDirExist(const char *dirPath);
-	ExportDLL bool IsDirExist(std::string &dirPath);
-	ExportDLL bool IsFileExist(const char *filePath);
-	ExportDLL bool IsFileExist(std::string &filePath);
-	ExportDLL bool MakeDir(const char *dirPath);
-	ExportDLL bool MakeDir(std::string &dirPath);
+	ExecuteResult Execute(const char *cmd);
+	ExecuteResult Execute(const std::string &cmd);
+	bool IsDirExist(const char *dirPath);
+	bool IsDirExist(std::string &dirPath);
+	bool IsFileExist(const char *filePath);
+	bool IsFileExist(std::string &filePath);
+	bool MakeDir(const char *dirPath);
+	bool MakeDir(std::string &dirPath);
 }
 
 #endif
