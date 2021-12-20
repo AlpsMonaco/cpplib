@@ -29,7 +29,8 @@ namespace os
 	bool IsFileExist(std::string &filePath);
 	bool MakeDir(const char *dirPath);
 	bool MakeDir(std::string &dirPath);
-	std::vector<std::string> GetFileList(const std::string &path);
+	bool DeleteFile(std::string &filePath);
+	bool DeleteFile(const char *filePath);
 }
 
 #endif

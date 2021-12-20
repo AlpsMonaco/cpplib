@@ -10,7 +10,6 @@
 
 #include <os.h>
 #include <strings.h>
-#include <utility>
 #include <filepath.h>
 #include <cstdio>
 
@@ -112,7 +111,10 @@ public:
 		const std::vector<std::string> cleanExtList = std::vector<std::string>{".obj", ".ilk", ".pdb"};
 		os::ExecuteResult result = os::Execute("dir /b");
 		if (result.code)
+		{
 			ErrorHandle(result.output);
+			return;
+		}
 		strings::ReplaceString(result.output, "\r\n", "\n");
 		std::vector<std::string> resultVector = strings::SplitString(result.output, "\n");
 		for (auto it : resultVector)
@@ -122,7 +124,7 @@ public:
 				if (it.find(extIt) != std::string::npos)
 				{
 					std::cout << "delete " + it << std::endl;
-					remove(it.c_str());
+					os::DeleteFile(it.c_str());
 				}
 			}
 		}

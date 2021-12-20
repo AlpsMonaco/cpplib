@@ -55,4 +55,14 @@ namespace os
 	{
 		return MakeDir(dirPath.c_str());
 	}
+
+	bool DeleteFile(std::string &filePath)
+	{
+		return DeleteFile(filePath.c_str());
+	}
+
+	bool DeleteFile(const char *filePath)
+	{
+		return remove(filePath) == 0;
+	}
 }
