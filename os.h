@@ -5,6 +5,7 @@
 #include <string>
 #include <io.h>
 #include <direct.h>
+#include <vector>
 
 #ifdef _WIN32
 #define popen _popen
@@ -28,6 +29,7 @@ namespace os
 	bool IsFileExist(std::string &filePath);
 	bool MakeDir(const char *dirPath);
 	bool MakeDir(std::string &dirPath);
+	std::vector<std::string> GetFileList(const std::string &path);
 }
 
 #endif

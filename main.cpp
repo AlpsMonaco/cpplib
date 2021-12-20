@@ -12,6 +12,7 @@
 #include <strings.h>
 #include <utility>
 #include <filepath.h>
+#include <cstdio>
 
 template <typename T>
 void ErrorHandle(T t)
@@ -26,14 +27,15 @@ public:
 	{
 		std::string filePath = ".";
 		std::string keyword = ".cpp";
-		std::vector<std::string> fileList = BuildLIB::GetFileListByExt(filePath, keyword, std::vector<std::string>{"main.cpp"});
+		std::vector<std::string> fileList = BuildLIB::GetFileList(filePath, keyword, std::vector<std::string>{"main.cpp"});
 		BuildLIB::CompileCppFiles(fileList);
 		keyword = ".obj";
-		fileList = BuildLIB::GetFileListByExt(filePath, keyword, std::vector<std::string>{"main.obj"});
+		fileList = BuildLIB::GetFileList(filePath, keyword, std::vector<std::string>{"main.obj"});
 		BuildLIB::CreateStaticLIB(fileList);
+		BuildLIB::Clean();
 	}
 
-	static std::vector<std::string> GetFileListByExt(std::string filePath, const std::string &keyword, const std::vector<std::string> &excludeFileList)
+	static std::vector<std::string> GetFileList(std::string filePath, const std::string &keyword, const std::vector<std::string> &excludeFileList)
 	{
 		if (filePath[filePath.length() - 1] != '/' || filePath[filePath.length() - 1] != '\\')
 			filePath += "\\";
@@ -105,8 +107,25 @@ public:
 		}
 	}
 
-	static void CreateDynamicLIB(std::vector<std::string> &objFileList)
+	static void Clean()
 	{
+		const std::vector<std::string> cleanExtList = std::vector<std::string>{".obj", ".ilk", ".pdb"};
+		os::ExecuteResult result = os::Execute("dir /b");
+		if (result.code)
+			ErrorHandle(result.output);
+		strings::ReplaceString(result.output, "\r\n", "\n");
+		std::vector<std::string> resultVector = strings::SplitString(result.output, "\n");
+		for (auto it : resultVector)
+		{
+			for (auto extIt : cleanExtList)
+			{
+				if (it.find(extIt) != std::string::npos)
+				{
+					std::cout << "delete " + it << std::endl;
+					remove(it.c_str());
+				}
+			}
+		}
 	}
 };
 

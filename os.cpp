@@ -55,5 +55,4 @@ namespace os
 	{
 		return MakeDir(dirPath.c_str());
 	}
-
 }
