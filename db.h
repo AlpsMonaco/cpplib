@@ -41,7 +41,7 @@ namespace db
 		MySQLExecRes Execute(const char *command);
 
 	private:
-		MYSQL mysql;
+		MYSQL *mysql;
 	};
 }
 
