@@ -5,6 +5,7 @@
 #include <string>
 #include <io.h>
 #include <direct.h>
+#include <iostream>
 #include <vector>
 
 #ifdef _WIN32
@@ -19,6 +20,14 @@ namespace os
 	public:
 		int code;
 		std::string output;
+		friend std::ostream &operator<<(std::ostream &os, const ExecuteResult &result)
+		{
+			os << result.code;
+			if (result.output != "")
+				os << std::endl
+				   << result.output;
+			return os;
+		}
 	};
 
 	ExecuteResult Execute(const char *cmd);

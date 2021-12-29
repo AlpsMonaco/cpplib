@@ -21,12 +21,6 @@ namespace os
 		}
 		return ExecuteResult{pclose(file), std::move(cmd)};
 	}
-	ExecuteResult Execute(const char *cmd) { return Execute(std::string(cmd)); }
-	bool IsPathExist(const char *path) { return access(path, 0) == 0; }
-	bool IsDirExist(const char *dirPath) { return IsPathExist(dirPath); }
-	bool IsDirExist(const std::string &dirPath) { return IsPathExist(dirPath.c_str()); }
-	bool IsFileExist(const char *filePath) { return IsPathExist(filePath); }
-	bool IsFileExist(const std::string &filePath) { return IsPathExist(filePath.c_str()); }
 
 	bool MakeDir(const char *dirPath)
 	{
@@ -50,19 +44,14 @@ namespace os
 			index = mkdir(buffer);
 		return index == 0;
 	}
+	bool IsPathExist(const char *path) { return access(path, 0) == 0; }
+	bool IsDirExist(const char *dirPath) { return IsPathExist(dirPath); }
+	bool IsDirExist(const std::string &dirPath) { return IsPathExist(dirPath.c_str()); }
+	bool IsFileExist(const char *filePath) { return IsPathExist(filePath); }
+	bool IsFileExist(const std::string &filePath) { return IsPathExist(filePath.c_str()); }
+	bool MakeDir(const std::string &dirPath) { return MakeDir(dirPath.c_str()); }
+	bool DeleteFile(const std::string &filePath) { return DeleteFile(filePath.c_str()); }
+	bool DeleteFile(const char *filePath) { return remove(filePath) == 0; }
+	ExecuteResult Execute(const char *cmd) { return Execute(std::string(cmd)); }
 
-	bool MakeDir(const std::string &dirPath)
-	{
-		return MakeDir(dirPath.c_str());
-	}
-
-	bool DeleteFile(const std::string &filePath)
-	{
-		return DeleteFile(filePath.c_str());
-	}
-
-	bool DeleteFile(const char *filePath)
-	{
-		return remove(filePath) == 0;
-	}
 }
