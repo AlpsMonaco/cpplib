@@ -24,12 +24,12 @@ namespace os
 	ExecuteResult Execute(const char *cmd);
 	ExecuteResult Execute(const std::string &cmd);
 	bool IsDirExist(const char *dirPath);
-	bool IsDirExist(std::string &dirPath);
+	bool IsDirExist(const std::string &dirPath);
 	bool IsFileExist(const char *filePath);
-	bool IsFileExist(std::string &filePath);
+	bool IsFileExist(const std::string &filePath);
 	bool MakeDir(const char *dirPath);
-	bool MakeDir(std::string &dirPath);
-	bool DeleteFile(std::string &filePath);
+	bool MakeDir(const std::string &dirPath);
+	bool DeleteFile(const std::string &filePath);
 	bool DeleteFile(const char *filePath);
 }
 

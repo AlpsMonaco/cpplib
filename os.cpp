@@ -24,9 +24,9 @@ namespace os
 	ExecuteResult Execute(const char *cmd) { return Execute(std::string(cmd)); }
 	bool IsPathExist(const char *path) { return access(path, 0) == 0; }
 	bool IsDirExist(const char *dirPath) { return IsPathExist(dirPath); }
-	bool IsDirExist(std::string &dirPath) { return IsPathExist(dirPath.c_str()); }
+	bool IsDirExist(const std::string &dirPath) { return IsPathExist(dirPath.c_str()); }
 	bool IsFileExist(const char *filePath) { return IsPathExist(filePath); }
-	bool IsFileExist(std::string &filePath) { return IsPathExist(filePath.c_str()); }
+	bool IsFileExist(const std::string &filePath) { return IsPathExist(filePath.c_str()); }
 
 	bool MakeDir(const char *dirPath)
 	{
@@ -51,12 +51,12 @@ namespace os
 		return index == 0;
 	}
 
-	bool MakeDir(std::string &dirPath)
+	bool MakeDir(const std::string &dirPath)
 	{
 		return MakeDir(dirPath.c_str());
 	}
 
-	bool DeleteFile(std::string &filePath)
+	bool DeleteFile(const std::string &filePath)
 	{
 		return DeleteFile(filePath.c_str());
 	}

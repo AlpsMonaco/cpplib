@@ -133,5 +133,14 @@ public:
 
 int main(int argc, char **argv)
 {
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "-c") == 0)
+		{
+			BuildLIB::Clean();
+			return 0;
+		}
+	}
 	BuildLIB::Start();
+	return 0;
 }
