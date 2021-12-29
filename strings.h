@@ -9,8 +9,8 @@ namespace strings
 {
 	void ReplaceString(std::string &s, std::string &from, std::string &to);
 	void ReplaceString(std::string &s, const char *from, const char *to);
-	std::vector<std::string> SplitString(std::string &s, std::string &sep);
-	std::vector<std::string> SplitString(std::string &s, const char *sep);
+	std::vector<std::string> SplitString(const std::string &s, const std::string &sep);
+	std::vector<std::string> SplitString(const std::string &s, const char *sep);
 	std::string ReadFileAll(const char *fileName);
 	template <typename T>
 	std::string ReadFileAll(T &fs) { return std::string(std::istreambuf_iterator<char>(fs), std::istreambuf_iterator<char>()); }

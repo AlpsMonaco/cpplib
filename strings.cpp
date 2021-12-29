@@ -17,7 +17,7 @@ namespace strings
 		ReplaceString(s, std::string(from), std::string(to));
 	}
 
-	std::vector<std::string> SplitString(std::string &s, std::string &sep)
+	std::vector<std::string> SplitString(const std::string &s, const std::string &sep)
 	{
 		size_t begin = 0;
 		size_t end = 0;
@@ -35,7 +35,7 @@ namespace strings
 		return v;
 	}
 
-	std::vector<std::string> SplitString(std::string &s, const char *sep)
+	std::vector<std::string> SplitString(const std::string &s, const char *sep)
 	{
 		return SplitString(s, std::string(sep));
 	}
