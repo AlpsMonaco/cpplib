@@ -5,4 +5,4 @@
 · db - mysql query and execute class.  
 · strings - Extend std::string lib.  
 · os - os operation like exec,create dir etc.  
-· filepath - a lib to parse filepat.  
+· filepath - a lib to parse filepath.  
