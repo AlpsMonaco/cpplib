@@ -3,14 +3,19 @@
 #define __OS_H
 #include <stdio.h>
 #include <string>
-#include <io.h>
-#include <direct.h>
 #include <iostream>
 #include <vector>
 
 #ifdef _WIN32
+#include <io.h>
+#include <direct.h>
 #define popen _popen
 #define pclose _pclose
+#else
+#include <cstring>
+#include <unistd.h>
+#include <sys/stat.h>
+#define mkdir(dst) mkdir(dst, 0755)
 #endif
 
 namespace os
