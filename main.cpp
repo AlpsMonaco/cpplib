@@ -109,7 +109,7 @@ public:
 
 	static void Clean()
 	{
-		const std::vector<std::string> cleanExtList = std::vector<std::string>{".obj", ".ilk", ".pdb"};
+		const std::vector<std::string> cleanExtList = std::vector<std::string>{".obj", ".ilk", ".pdb", ".o"};
 		os::ExecuteResult result = os::Execute("dir /b");
 		if (result.code)
 		{
