@@ -1,6 +1,6 @@
-#include "stringutil.h"
+#include "stringext.h"
 
-namespace stringutil
+namespace stringext
 {
 	void ReplaceString(std::string &s, const std::string &from, const std::string &to)
 	{

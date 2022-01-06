@@ -1,11 +1,11 @@
 #pragma once
-#ifndef __STRING_UTIL_H
-#define __STRING_UTIL_H
+#ifndef __STRING_EXT_H
+#define __STRING_EXT_H
 #include <string>
 #include <vector>
 #include <fstream>
 
-namespace stringutil
+namespace stringext
 {
 	void ReplaceString(std::string &s, std::string &from, std::string &to);
 	void ReplaceString(std::string &s, const char *from, const char *to);

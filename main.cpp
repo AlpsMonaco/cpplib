@@ -9,7 +9,7 @@
 #endif
 
 #include <os.h>
-#include <stringutil.h>
+#include <stringext.h>
 #include <filepath.h>
 #include <cstdio>
 
@@ -48,9 +48,9 @@ public:
 			return v;
 		}
 
-		stringutil::TrimSpace(result.output);
-		stringutil::ReplaceString(result.output, "\r\n", "\n");
-		v = stringutil::SplitString(result.output, "\n");
+		stringext::TrimSpace(result.output);
+		stringext::ReplaceString(result.output, "\r\n", "\n");
+		v = stringext::SplitString(result.output, "\n");
 		std::vector<std::string> resultFileList;
 		for (auto it = v.begin(); it < v.end(); it++)
 		{
@@ -116,8 +116,8 @@ public:
 			ErrorHandle(result.output);
 			return;
 		}
-		stringutil::ReplaceString(result.output, "\r\n", "\n");
-		std::vector<std::string> resultVector = stringutil::SplitString(result.output, "\n");
+		stringext::ReplaceString(result.output, "\r\n", "\n");
+		std::vector<std::string> resultVector = stringext::SplitString(result.output, "\n");
 		for (auto it : resultVector)
 		{
 			for (auto extIt : cleanExtList)
