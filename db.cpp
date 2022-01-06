@@ -14,21 +14,9 @@ namespace db
 		mysql_thread_end();
 	}
 
-	bool MySQL::Connect(const char *host, int port, const char *user, const char *password, const char *database)
-	{
-		return mysql_real_connect(this->mysql, host, user, password, database, port, nullptr, 0) != NULL;
-	}
-
-	const char *MySQL::Error()
-	{
-		return mysql_error(this->mysql);
-	}
-
-	unsigned int MySQL::Errno()
-	{
-		return mysql_errno(this->mysql);
-	}
-
+	inline bool MySQL::Connect(const char *host, int port, const char *user, const char *password, const char *database) { return mysql_real_connect(this->mysql, host, user, password, database, port, nullptr, 0) != NULL; }
+	inline const char *MySQL::Error() { return mysql_error(this->mysql); }
+	inline unsigned int MySQL::Errno() { return mysql_errno(this->mysql); }
 	MySQLResult MySQL::Query(const char *command)
 	{
 		MySQLResult result{0};
