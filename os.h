@@ -1,21 +1,11 @@
 #pragma once
 #ifndef __OS_H
 #define __OS_H
-#include <stdio.h>
 #include <string>
 #include <iostream>
-#include <vector>
 
 #ifdef _WIN32
 #include <io.h>
-#include <direct.h>
-#define popen _popen
-#define pclose _pclose
-#else
-#include <cstring>
-#include <unistd.h>
-#include <sys/stat.h>
-#define mkdir(dst) mkdir(dst, 0755)
 #endif
 
 namespace os
@@ -35,16 +25,17 @@ namespace os
 		}
 	};
 
+	bool MakeDir(const char *dirPath);
 	ExecuteResult Execute(const char *cmd);
 	ExecuteResult Execute(const std::string &cmd);
-	bool IsDirExist(const char *dirPath);
-	bool IsDirExist(const std::string &dirPath);
-	bool IsFileExist(const char *filePath);
-	bool IsFileExist(const std::string &filePath);
-	bool MakeDir(const char *dirPath);
-	bool MakeDir(const std::string &dirPath);
-	bool DeleteFile(const std::string &filePath);
-	bool DeleteFile(const char *filePath);
+	inline bool IsPathExist(const char *path) { return access(path, 0) == 0; }
+	inline bool IsDirExist(const char *dirPath) { return IsPathExist(dirPath); }
+	inline bool IsDirExist(const std::string &dirPath) { return IsPathExist(dirPath.c_str()); }
+	inline bool IsFileExist(const char *filePath) { return IsPathExist(filePath); }
+	inline bool IsFileExist(const std::string &filePath) { return IsPathExist(filePath.c_str()); }
+	inline bool MakeDir(const std::string &dirPath) { return MakeDir(dirPath.c_str()); }
+	inline bool DeleteFile(const std::string &filePath) { return DeleteFile(filePath.c_str()); }
+	inline bool DeleteFile(const char *filePath) { return remove(filePath) == 0; }
 }
 
 #endif

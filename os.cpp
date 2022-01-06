@@ -1,5 +1,17 @@
 #include "os.h"
 
+#ifdef _WIN32
+#include <io.h>
+#include <direct.h>
+#define popen _popen
+#define pclose _pclose
+#else
+#include <cstring>
+#include <unistd.h>
+#include <sys/stat.h>
+#define mkdir(dst) mkdir(dst, 0755)
+#endif
+
 namespace os
 {
 	ExecuteResult Execute(const std::string &s)
@@ -42,16 +54,9 @@ namespace os
 		index = 0;
 		if (!IsDirExist(buffer))
 			index = mkdir(buffer);
+		free(buffer);
 		return index == 0;
 	}
-	bool IsPathExist(const char *path) { return access(path, 0) == 0; }
-	bool IsDirExist(const char *dirPath) { return IsPathExist(dirPath); }
-	bool IsDirExist(const std::string &dirPath) { return IsPathExist(dirPath.c_str()); }
-	bool IsFileExist(const char *filePath) { return IsPathExist(filePath); }
-	bool IsFileExist(const std::string &filePath) { return IsPathExist(filePath.c_str()); }
-	bool MakeDir(const std::string &dirPath) { return MakeDir(dirPath.c_str()); }
-	bool DeleteFile(const std::string &filePath) { return DeleteFile(filePath.c_str()); }
-	bool DeleteFile(const char *filePath) { return remove(filePath) == 0; }
-	ExecuteResult Execute(const char *cmd) { return Execute(std::string(cmd)); }
 
+	ExecuteResult Execute(const char *cmd) { return Execute(std::string(cmd)); }
 }
