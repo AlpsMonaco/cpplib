@@ -1,3 +1,7 @@
+// #define __BETA 1
+#ifndef __BETA
+#ifdef _WIN32
+
 #ifndef __MARCO_PRINTLN
 #define __MARCO_PRINTLN
 #include <iostream>
@@ -145,3 +149,38 @@ int main(int argc, char **argv)
 	BuildLIB::Start();
 	return 0;
 }
+
+#else
+
+#include <dirent.h>
+#include <stdio.h>
+
+int main(void)
+{
+	DIR *d;
+	struct dirent *dir;
+	d = opendir(".");
+	if (d)
+	{
+		while ((dir = readdir(d)) != NULL)
+		{
+			printf("%s\n", dir->d_name);
+		}
+		closedir(d);
+	}
+	return (0);
+}
+
+#endif
+
+#else
+
+#include "os.h"
+
+int main(int argc, char **argv)
+{
+	for (auto v : os::ListDir("/etc"))
+		std::cout << v << std::endl;
+}
+
+#endif
