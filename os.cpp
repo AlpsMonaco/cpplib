@@ -15,7 +15,7 @@
 namespace os
 {
 #ifdef _WIN32
-	inline std::vector<std::string> GetDirectoryList(const char *path)
+	std::vector<std::string> GetDirectoryList(const char *path)
 	{
 		std::string dirPath(path);
 		WIN32_FIND_DATAA findData;
@@ -37,12 +37,17 @@ namespace os
 		if (hFind == INVALID_HANDLE_VALUE)
 			return dirList;
 		while (FindNextFileA(hFind, &findData) != 0)
+		{
+			if (strcmp("..", findData.cFileName) == 0)
+				continue;
 			dirList.push_back(std::string(findData.cFileName));
+		}
+
 		FindClose(hFind);
 		return dirList;
 	}
 #else
-	inline std::vector<std::string> GetDirectoryList(const char *path)
+	std::vector<std::string> GetDirectoryList(const char *path)
 	{
 		std::vector<std::string> list;
 		DIR *d;
