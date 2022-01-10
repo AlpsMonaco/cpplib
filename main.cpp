@@ -175,12 +175,29 @@ int main(void)
 
 #else
 
-#include "os.h"
+#include "db.h"
+#include "iostream"
 
 int main(int argc, char **argv)
 {
-	for (auto v : os::ListDir("/etc"))
-		std::cout << v << std::endl;
+	db::MySQL mysql;
+	if (!mysql.Connect("172.27.208.1", 33123, "hotgame", "hotgame82year.HL", "mysql"))
+	{
+		std::cout << mysql.Errno() << mysql.Error() << std::endl;
+		return 1;
+	}
+
+	auto result = mysql.Query("show databases;");
+	if (result.errCode)
+	{
+		std::cout << mysql.Errno() << mysql.Error() << std::endl;
+		return 1;
+	}
+
+	for (auto v : result.vector)
+		for (auto s : v)
+			std::cout << s << std::endl;
+	return 0;
 }
 
 #endif
