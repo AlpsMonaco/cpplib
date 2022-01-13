@@ -59,6 +59,25 @@ Socket &Socket::operator=(const Socket &s)
 	return *this;
 }
 
+Socket &Socket::operator=(Socket &&s)
+{
+	this->af = s.af;
+	this->sock = s.sock;
+	this->addr = s.addr;
+	this->port = s.port;
+	this->fd = s.fd;
+	this->errmsg = s.errmsg;
+	this->errcode = s.errcode;
+	s.af = 0;
+	s.sock = 0;
+	s.addr = nullptr;
+	s.port = 0;
+	s.fd = 0;
+	s.errmsg = nullptr;
+	s.errcode = 0;
+	return *this;
+}
+
 Socket::Socket(const Socket &s)
 {
 	this->errcode = s.errcode;
@@ -194,6 +213,12 @@ Client::Client(Client &&c) : Socket((Client &&) c) {}
 Client &Client::operator=(const Client &c)
 {
 	Socket::operator=(c);
+	return *this;
+}
+
+Client &Client::operator=(Client &&c)
+{
+	Socket::operator=((Client &&) c);
 	return *this;
 }
 

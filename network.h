@@ -13,12 +13,16 @@ namespace network
 		Socket(int fd, const char *addr, const int &port);
 		Socket(const char *addr, const int &port, const int &af, const int &sock);
 		virtual ~Socket();
+
 		Socket &operator=(const Socket &s);
+		Socket &operator=(Socket &&s);
+
 		int Send(const char *buf, const int &bufSize);
 		int Recv(char *buf, const int &bufSize);
 		int Close();
 		const char *GetAddr();
 		int GetPort();
+
 		int errcode;
 		char *errmsg;
 
@@ -40,7 +44,9 @@ namespace network
 			Client(Client &&c);
 			Client(const char *addr, const int &port);
 			Client &operator=(const Client &c);
+			Client &operator=(Client &&c);
 			~Client();
+
 			bool Connect();
 		};
 
@@ -49,6 +55,7 @@ namespace network
 		public:
 			Server(const char *addr, const int &port);
 			~Server();
+
 			bool Listen();
 			bool Accept(Socket &socket);
 		};
