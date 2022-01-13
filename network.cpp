@@ -15,24 +15,28 @@
 
 #endif
 
-using namespace network;
-void NetToHost(const void *net, char dst[16])
+namespace network
 {
-	unsigned char *temp = (unsigned char *)net;
-	for (int i = 0; i < 4; i++)
+	void NetToHost(const void *net, char dst[16])
 	{
-		sprintf(dst, "%u", temp[i]);
-		do
+		unsigned char *temp = (unsigned char *)net;
+		for (int i = 0; i < 4; i++)
 		{
-		} while (*(++dst) != 0);
+			sprintf(dst, "%u", temp[i]);
+			do
+			{
+			} while (*(++dst) != 0);
 
-		if (i != 3)
-		{
-			*dst = '.';
-			dst++;
+			if (i != 3)
+			{
+				*dst = '.';
+				dst++;
+			}
 		}
 	}
 }
+
+using namespace network;
 
 int Socket::GetPort() { return this->port; }
 const char *Socket::GetAddr() { return this->addr; }
