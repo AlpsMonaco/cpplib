@@ -7,13 +7,16 @@ namespace network
 	class Socket
 	{
 	public:
+		Socket(int fd, const char *addr, const int &port);
 		Socket(const char *addr, const int &port, const int &af, const int &sock);
 		virtual ~Socket();
-		virtual int Send(const char *buf, const int &bufSize) = 0;
-		virtual int Recv(char *buf, const int &bufSize) = 0;
-		virtual int Close() = 0;
-		const char *Error();
-		int Errno();
+		int Send(const char *buf, const int &bufSize);
+		int Recv(char *buf, const int &bufSize);
+		int Close();
+		const char *GetAddr();
+		int GetPort();
+		int errcode;
+		char *errmsg;
 
 	protected:
 		void SetError(const int &errcode, const char *errmsg);
@@ -21,8 +24,6 @@ namespace network
 		int sock;
 		char *addr;
 		int port;
-		char *errmsg;
-		int errcode;
 		int fd;
 	};
 
@@ -34,9 +35,6 @@ namespace network
 			Client(const char *addr, const int &port);
 			~Client();
 			bool Connect();
-			int Send(const char *buf, const int &bufSize);
-			int Recv(char *buf, const int &bufSize);
-			int Close();
 		};
 
 		class Server : public Socket
@@ -44,10 +42,8 @@ namespace network
 		public:
 			Server(const char *addr, const int &port);
 			~Server();
-			bool Listen(const char *addr, const int &port);
-			int Send(const char *buf, const int &bufSize);
-			int Recv(char *buf, const int &bufSize);
-			int Close();
+			bool Listen();
+			Socket Accept();
 		};
 	}
 
