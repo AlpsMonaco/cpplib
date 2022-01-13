@@ -2,6 +2,7 @@
 
 #ifdef _WIN32
 #include "WinSock2.h"
+#include "stdio.h"
 #pragma comment(lib, "WS2_32.lib")
 #else
 #define INVALID_SOCKET -1
@@ -15,6 +16,24 @@
 #endif
 
 using namespace network;
+void NetToHost(const void *net, char dst[16])
+{
+	unsigned char *temp = (unsigned char *)net;
+	for (int i = 0; i < 4; i++)
+	{
+		sprintf(dst, "%u", temp[i]);
+		do
+		{
+		} while (*(++dst) != 0);
+
+		if (i != 3)
+		{
+			*dst = '.';
+			dst++;
+		}
+	}
+}
+
 int Socket::GetPort() { return this->port; }
 const char *Socket::GetAddr() { return this->addr; }
 inline void SetErrorMsg(int *errcode, char **errmsg, int code, char *msg)
@@ -117,14 +136,17 @@ Socket::Socket(Socket &&s)
 	s.errcode = 0;
 }
 
-Socket::Socket(int fd, const char *addr, const int &port)
+Socket::Socket(int fd, const char *addr, const int &port, const int &af, const int &sock)
 {
 	this->fd = fd;
 	this->port = port;
+	this->af = af;
+	this->sock = sock;
+	this->errcode = 0;
+	this->addr = nullptr;
+	this->errmsg = nullptr;
 	this->addr = (char *)malloc(strlen(addr) + 1);
 	strcpy(this->addr, addr);
-	this->errcode = 0;
-	this->errmsg = nullptr;
 }
 
 void Socket::SetError(const int &errcode, const char *errmsg)
@@ -266,12 +288,16 @@ bool Server::Accept(Socket &socket)
 {
 	SOCKADDR_IN client;
 	int addrlen = sizeof(client);
-	SOCKET clientSocket;
-	if ((clientSocket = accept(this->fd, (sockaddr *)&client, &addrlen)) == SOCKET_ERROR)
+	SOCKET fd;
+	if ((fd = accept(this->fd, (sockaddr *)&client, &addrlen)) == SOCKET_ERROR)
 	{
 		SetErrorMsg(&this->errcode, &this->errmsg, SOCKET_ERROR, "accept error");
 		return false;
 	}
+	int port = ntohs(client.sin_port);
+	char addr[16];
+	NetToHost(&client.sin_addr.S_un.S_addr, addr);
+	socket = Socket(fd, addr, port, af, sock);
 	return true;
 }
 

@@ -10,7 +10,7 @@ namespace network
 		Socket();
 		Socket(Socket &&s);
 		Socket(const Socket &s);
-		Socket(int fd, const char *addr, const int &port);
+		Socket(int fd, const char *addr, const int &port, const int &af, const int &sock);
 		Socket(const char *addr, const int &port, const int &af, const int &sock);
 		virtual ~Socket();
 
