@@ -39,6 +39,7 @@ namespace network
 			Client(const Client &c) : Socket(c){};
 			Client(Client &&c);
 			Client(const char *addr, const int &port);
+			Client &operator=(const Client &c);
 			~Client();
 			bool Connect();
 		};

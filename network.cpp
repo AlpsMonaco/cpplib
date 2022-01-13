@@ -191,6 +191,11 @@ using namespace tcp;
 Client::Client(const char *addr, const int &port) : Socket(addr, port, AF_INET, SOCK_STREAM) {}
 Client::~Client() {}
 Client::Client(Client &&c) : Socket((Client &&) c) {}
+Client &Client::operator=(const Client &c)
+{
+	Socket::operator=(c);
+	return *this;
+}
 
 #ifdef _WIN32
 
