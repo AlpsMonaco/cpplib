@@ -29,22 +29,22 @@ inline void SetErrorMsg(int *errcode, char **errmsg, int code, char *msg)
 Socket::Socket(const Socket &s)
 {
 	this->errcode = s.errcode;
+	this->port = s.port;
+	this->fd = s.fd;
+	this->af = s.af;
+	this->sock = s.sock;
+	this->addr = nullptr;
+	this->errmsg = nullptr;
 	if (s.errmsg != nullptr)
 	{
 		this->errmsg = (char *)malloc(strlen(s.errmsg) + 1);
 		strcpy(this->errmsg, s.errmsg);
 	}
-	this->errmsg = s.errmsg;
-	this->af = s.af;
-	this->sock = s.sock;
-	this->addr = s.addr;
 	if (s.addr != nullptr)
 	{
 		this->addr = (char *)malloc(strlen(s.addr) + 1);
 		strcpy(this->addr, s.addr);
 	}
-	this->port = s.port;
-	this->fd = s.fd;
 }
 
 Socket::Socket(Socket &&s)
@@ -52,21 +52,16 @@ Socket::Socket(Socket &&s)
 	this->af = s.af;
 	this->sock = s.sock;
 	this->addr = s.addr;
-	s.addr = nullptr;
 	this->port = s.port;
-	s.port = 0;
 	this->fd = s.fd;
-	s.fd = 0;
-	if (s.errmsg != nullptr)
-	{
-		this->errmsg = s.errmsg;
-		s.errmsg = nullptr;
-	}
-	else
-	{
-		this->errmsg = nullptr;
-	}
+	this->errmsg = s.errmsg;
 	this->errcode = s.errcode;
+	s.af = 0;
+	s.sock = 0;
+	s.addr = nullptr;
+	s.port = 0;
+	s.fd = 0;
+	s.errmsg = nullptr;
 	s.errcode = 0;
 }
 
@@ -160,10 +155,9 @@ int Socket::Close()
 #endif
 
 using namespace tcp;
-Client::Client(const char *addr, const int &port) : Socket(addr, port, AF_INET, SOCK_STREAM)
-{
-}
+Client::Client(const char *addr, const int &port) : Socket(addr, port, AF_INET, SOCK_STREAM) {}
 Client::~Client() {}
+Client::Client(Client &&c) : Socket((Client &&) c) {}
 
 #ifdef _WIN32
 
