@@ -26,6 +26,39 @@ inline void SetErrorMsg(int *errcode, char **errmsg, int code, char *msg)
 	strcpy(*errmsg, msg);
 }
 
+Socket::Socket()
+{
+	this->errcode = 0;
+	this->af = 0;
+	this->sock = 0;
+	this->port = 0;
+	this->fd = 0;
+	this->errmsg = nullptr;
+	this->addr = nullptr;
+}
+
+Socket &Socket::operator=(const Socket &s)
+{
+	this->errcode = s.errcode;
+	this->port = s.port;
+	this->fd = s.fd;
+	this->af = s.af;
+	this->sock = s.sock;
+	this->addr = nullptr;
+	this->errmsg = nullptr;
+	if (s.errmsg != nullptr)
+	{
+		this->errmsg = (char *)malloc(strlen(s.errmsg) + 1);
+		strcpy(this->errmsg, s.errmsg);
+	}
+	if (s.addr != nullptr)
+	{
+		this->addr = (char *)malloc(strlen(s.addr) + 1);
+		strcpy(this->addr, s.addr);
+	}
+	return *this;
+}
+
 Socket::Socket(const Socket &s)
 {
 	this->errcode = s.errcode;
@@ -194,6 +227,19 @@ bool Server::Listen()
 	if (ret)
 	{
 		SetErrorMsg(&this->errcode, &this->errmsg, ret, "listen failed");
+		return false;
+	}
+	return true;
+}
+
+bool Server::Accept(Socket &socket)
+{
+	SOCKADDR_IN client;
+	int addrlen = sizeof(client);
+	SOCKET clientSocket;
+	if ((clientSocket = accept(this->fd, (sockaddr *)&client, &addrlen)) == SOCKET_ERROR)
+	{
+		SetErrorMsg(&this->errcode, &this->errmsg, SOCKET_ERROR, "accept error");
 		return false;
 	}
 	return true;

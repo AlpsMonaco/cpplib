@@ -7,11 +7,13 @@ namespace network
 	class Socket
 	{
 	public:
+		Socket();
 		Socket(Socket &&s);
 		Socket(const Socket &s);
 		Socket(int fd, const char *addr, const int &port);
 		Socket(const char *addr, const int &port, const int &af, const int &sock);
 		virtual ~Socket();
+		Socket &operator=(const Socket &s);
 		int Send(const char *buf, const int &bufSize);
 		int Recv(char *buf, const int &bufSize);
 		int Close();
@@ -47,7 +49,7 @@ namespace network
 			Server(const char *addr, const int &port);
 			~Server();
 			bool Listen();
-			Socket Accept();
+			bool Accept(Socket &socket);
 		};
 	}
 
