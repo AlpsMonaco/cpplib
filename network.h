@@ -7,6 +7,8 @@ namespace network
 	class Socket
 	{
 	public:
+		Socket(Socket &&s);
+		Socket(const Socket &s);
 		Socket(int fd, const char *addr, const int &port);
 		Socket(const char *addr, const int &port, const int &af, const int &sock);
 		virtual ~Socket();
@@ -32,6 +34,8 @@ namespace network
 		class Client : public Socket
 		{
 		public:
+			Client(const Client &c) : Socket(c){};
+			Client(Client &&c);
 			Client(const char *addr, const int &port);
 			~Client();
 			bool Connect();

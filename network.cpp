@@ -4,6 +4,7 @@
 #include "WinSock2.h"
 #pragma comment(lib, "WS2_32.lib")
 #else
+#define INVALID_SOCKET -1
 #include <cstring>
 #include <cstdlib>
 #include <sys/socket.h>
@@ -15,7 +16,59 @@
 
 using namespace network;
 int Socket::GetPort() { return this->port; }
-const char *Socket::GetAddr() { return this->errmsg; }
+const char *Socket::GetAddr() { return this->addr; }
+inline void SetErrorMsg(int *errcode, char **errmsg, int code, char *msg)
+{
+	*errcode = code;
+	if (*errmsg != nullptr)
+		free(*errmsg);
+	*errmsg = (char *)malloc(strlen(msg) + 1);
+	strcpy(*errmsg, msg);
+}
+
+Socket::Socket(const Socket &s)
+{
+	this->errcode = s.errcode;
+	if (s.errmsg != nullptr)
+	{
+		this->errmsg = (char *)malloc(strlen(s.errmsg) + 1);
+		strcpy(this->errmsg, s.errmsg);
+	}
+	this->errmsg = s.errmsg;
+	this->af = s.af;
+	this->sock = s.sock;
+	this->addr = s.addr;
+	if (s.addr != nullptr)
+	{
+		this->addr = (char *)malloc(strlen(s.addr) + 1);
+		strcpy(this->addr, s.addr);
+	}
+	this->port = s.port;
+	this->fd = s.fd;
+}
+
+Socket::Socket(Socket &&s)
+{
+	this->af = s.af;
+	this->sock = s.sock;
+	this->addr = s.addr;
+	s.addr = nullptr;
+	this->port = s.port;
+	s.port = 0;
+	this->fd = s.fd;
+	s.fd = 0;
+	if (s.errmsg != nullptr)
+	{
+		this->errmsg = s.errmsg;
+		s.errmsg = nullptr;
+	}
+	else
+	{
+		this->errmsg = nullptr;
+	}
+	this->errcode = s.errcode;
+	s.errcode = 0;
+}
 
 Socket::Socket(int fd, const char *addr, const int &port)
 {
@@ -51,36 +104,6 @@ int Socket::Recv(char *buf, const int &bufSize)
 	return size;
 }
 
-inline void SetErrorMsg(int *errcode, char **errmsg, int code, char *msg)
-{
-	*errcode = code;
-	if (*errmsg != nullptr)
-		free(*errmsg);
-	*errmsg = (char *)malloc(strlen(msg) + 1);
-	strcpy(*errmsg, msg);
-}
-
-#ifdef _WIN32
-
-void Clean()
-{
-	WSACleanup();
-}
-
-struct WSAManager
-{
-	bool isInit;
-	WSADATA wsadata;
-	void Init()
-	{
-		if (!isInit)
-			WSAStartup(MAKEWORD(2, 2), &wsadata);
-		isInit = true;
-		atexit(Clean);
-	}
-
-} wsa{false};
-
 Socket::Socket(const char *addr, const int &port, const int &af, const int &sock)
 {
 	this->port = port;
@@ -90,7 +113,6 @@ Socket::Socket(const char *addr, const int &port, const int &af, const int &sock
 	strcpy(this->addr, addr);
 	this->errcode = 0;
 	this->errmsg = nullptr;
-	wsa.Init();
 	this->fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->fd == INVALID_SOCKET)
 	{
@@ -103,46 +125,48 @@ Socket::~Socket()
 {
 	free(this->addr);
 	if (this->errmsg != nullptr)
+	{
 		free(this->errmsg);
+		this->errmsg = nullptr;
+	}
 }
+
+#ifdef _WIN32
+
+void Clean()
+{
+	WSACleanup();
+}
+
+struct WSAManager
+{
+	WSAManager()
+	{
+		WSADATA wsadata;
+		WSAStartup(MAKEWORD(2, 2), &wsadata);
+		atexit(Clean);
+	}
+} wsa;
 
 int Socket::Close() { return closesocket(this->fd); }
 
 #else
 
-Socket::Socket(const char *addr, const int &port, const int &af, const int &sock)
+int Socket::Close()
 {
-	this->port = port;
-	this->af = af;
-	this->sock = sock;
-	this->addr = (char *)malloc(strlen(addr) + 1);
-	strcpy(this->addr, addr);
-	this->fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (this->fd == -1)
-	{
-		this->SetError(-1, "invalid socket");
-		return;
-	}
+	return close(this->fd);
 }
-
-Socket::~Socket()
-{
-	free(this->addr);
-	if (this->errmsg != nullptr)
-		free(this->errmsg);
-}
-
-int Socket::Close() { return close(this->fd); }
 
 #endif
 
 using namespace tcp;
-#ifdef _WIN32
-
 Client::Client(const char *addr, const int &port) : Socket(addr, port, AF_INET, SOCK_STREAM)
 {
 }
 Client::~Client() {}
+
+#ifdef _WIN32
+
 bool Client::Connect()
 {
 	SOCKADDR_IN addr;
@@ -182,10 +206,6 @@ bool Server::Listen()
 }
 
 #else
-Client::Client(const char *addr, const int &port) : Socket(addr, port, AF_INET, SOCK_STREAM)
-{
-}
-Client::~Client() {}
 bool Client::Connect()
 {
 	sockaddr_in addr;
