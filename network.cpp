@@ -3,11 +3,14 @@
 #ifdef _WIN32
 #include "WinSock2.h"
 #include "stdio.h"
+using socklen_t = int;
 #pragma comment(lib, "WS2_32.lib")
 #else
 #define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
 #include <cstring>
 #include <cstdlib>
+#include <cstdio>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -35,7 +38,7 @@ namespace network
 		}
 	}
 
-	inline void SetErrorMsg(int *errcode, char **errmsg, int code, char *msg)
+	inline void SetErrorMsg(int *errcode, char **errmsg, const int &code, const char *msg)
 	{
 		*errcode = code;
 		if (*errmsg != nullptr)
@@ -54,6 +57,19 @@ namespace network
 		}
 		return true;
 	}
+
+#ifdef _WIN32
+	inline int GetSocketErrno()
+	{
+		return WSAGetLastError();
+	}
+#else
+	inline int GetSocketErrno()
+	{
+		return -1;
+	}
+#endif
+
 }
 
 using namespace network;
@@ -86,8 +102,7 @@ Socket &Socket::operator=(const Socket &s)
 		this->errmsg = (char *)malloc(strlen(s.errmsg) + 1);
 		strcpy(this->errmsg, s.errmsg);
 	}
-	if (s.addr != nullptr)
-		strcpy(this->addr, s.addr);
+	strcpy(this->addr, s.addr);
 	return *this;
 }
 
@@ -124,8 +139,7 @@ Socket::Socket(const Socket &s)
 		this->errmsg = (char *)malloc(strlen(s.errmsg) + 1);
 		strcpy(this->errmsg, s.errmsg);
 	}
-	if (s.addr != nullptr)
-		strcpy(this->addr, s.addr);
+	strcpy(this->addr, s.addr);
 }
 
 Socket::Socket(Socket &&s)
@@ -243,8 +257,10 @@ int Socket::Close()
 #endif
 
 using namespace tcp;
+Client::Client() : Socket(AF_INET, SOCK_STREAM) {}
 Client::Client(const char *addr, const int &port) : Socket(addr, port, AF_INET, SOCK_STREAM) {}
 Client::~Client() {}
+Client::Client(const Client &c) : Socket(c) {}
 Client::Client(Client &&c) : Socket((Client &&) c) {}
 Client &Client::operator=(const Client &c)
 {
@@ -258,27 +274,6 @@ Client &Client::operator=(Client &&c)
 	return *this;
 }
 
-#ifdef _WIN32
-
-Client::Client() : Socket(AF_INET, SOCK_STREAM)
-{
-}
-
-bool Client::Connect()
-{
-	SOCKADDR_IN addr;
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(this->port);
-	addr.sin_addr.S_un.S_addr = inet_addr(this->addr);
-	int ret = connect(fd, (sockaddr *)&addr, sizeof(addr));
-	if (ret)
-	{
-		SetError(WSAGetLastError(), "connect failed");
-		return false;
-	}
-	return true;
-}
-
 bool Client::Connect(const char *addr, const int &port)
 {
 	this->port = port;
@@ -290,47 +285,6 @@ bool Client::Connect(const char *addr, const int &port)
 
 Server::Server(const char *addr, const int &port) : Socket(addr, port, AF_INET, SOCK_STREAM) {}
 Server::~Server() {}
-bool Server::Listen()
-{
-	if (this->errcode)
-		return false;
-	SOCKADDR_IN addr;
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(this->port);
-	addr.sin_addr.S_un.S_addr = inet_addr(this->addr);
-	int ret = bind(fd, (sockaddr *)&addr, sizeof(addr));
-	if (ret)
-	{
-		SetErrorMsg(&this->errcode, &this->errmsg, ret, "bind failed");
-		return false;
-	}
-	ret = listen(fd, 10);
-	if (ret)
-	{
-		SetErrorMsg(&this->errcode, &this->errmsg, ret, "listen failed");
-		return false;
-	}
-	return true;
-}
-
-bool Server::Accept(Socket &socket)
-{
-	SOCKADDR_IN client;
-	int addrlen = sizeof(client);
-	SOCKET fd;
-	if ((fd = accept(this->fd, (sockaddr *)&client, &addrlen)) == SOCKET_ERROR)
-	{
-		SetErrorMsg(&this->errcode, &this->errmsg, SOCKET_ERROR, "accept error");
-		return false;
-	}
-	int port = ntohs(client.sin_port);
-	char addr[16];
-	NetToHost(&client.sin_addr.S_un.S_addr, addr);
-	socket = Socket(fd, addr, port, af, sock);
-	return true;
-}
-
-#else
 bool Client::Connect()
 {
 	sockaddr_in addr;
@@ -340,10 +294,54 @@ bool Client::Connect()
 	int ret = connect(fd, (sockaddr *)&addr, sizeof(addr));
 	if (ret)
 	{
-		SetError(ret, "connect failed");
+		SetError(GetSocketErrno(), "connect failed");
 		return false;
 	}
 	return true;
 }
+
+bool Server::Listen()
+{
+	if (this->errcode)
+		return false;
+	sockaddr_in addr;
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(this->port);
+	addr.sin_addr.s_addr = inet_addr(this->addr);
+	int ret = bind(fd, (sockaddr *)&addr, sizeof(addr));
+	if (ret)
+	{
+		SetErrorMsg(&this->errcode, &this->errmsg, GetSocketErrno(), "bind failed");
+		return false;
+	}
+	ret = listen(fd, 10);
+	if (ret)
+	{
+		SetErrorMsg(&this->errcode, &this->errmsg, GetSocketErrno(), "listen failed");
+		return false;
+	}
+	return true;
+}
+
+bool Server::Accept(Socket &socket)
+{
+	sockaddr_in client;
+	socklen_t addrlen = sizeof(client);
+	int fd;
+	if ((fd = accept(this->fd, (sockaddr *)&client, &addrlen)) == SOCKET_ERROR)
+	{
+		SetErrorMsg(&this->errcode, &this->errmsg, SOCKET_ERROR, "accept error");
+		return false;
+	}
+	int port = ntohs(client.sin_port);
+	char addr[16];
+	NetToHost(&client.sin_addr.s_addr, addr);
+	socket = Socket(fd, addr, port, af, sock);
+	return true;
+}
+
+#ifdef _WIN32
+
+#else
 
 #endif

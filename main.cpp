@@ -162,7 +162,7 @@ int BeginBuildLIB(int argc, char **argv)
 
 #include "network.h"
 #include "thread"
-const int port = 54444;
+const int port = 55455;
 const char *addr = "127.0.0.1";
 
 void ServerMethod()
