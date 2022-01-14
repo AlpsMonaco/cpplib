@@ -40,13 +40,13 @@ namespace stringext
 		return SplitString(s, std::string(sep));
 	}
 
-	std::string ReadFileAll(const char *fileName)
-	{
-		std::ifstream ifs(fileName);
-		if (!ifs.is_open())
-			return "";
-		return std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
-	}
+	// std::string ReadFileAll(const char *fileName)
+	// {
+	// 	std::ifstream ifs(fileName);
+	// 	if (!ifs.is_open())
+	// 		return "";
+	// 	return std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
+	// }
 
 	const std::string SpaceCharacters = " \t\r\n";
 

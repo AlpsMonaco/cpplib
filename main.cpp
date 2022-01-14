@@ -1,4 +1,4 @@
-#define __BUILD_LIB_MODE 1
+// #define __BUILD_LIB_MODE 1
 #ifdef __BUILD_LIB_MODE
 #ifndef __MARCO_PRINTLN
 #define __MARCO_PRINTLN
@@ -148,6 +148,8 @@ int main(int argc, char **argv)
 	return 0;
 }
 
+#else
+
 #ifndef __MARCO_PRINTLN
 #define __MARCO_PRINTLN
 #include <iostream>
@@ -220,7 +222,7 @@ void ClientMethod()
 	c.Close();
 }
 
-#else
+#include "stringext.h"
 
 int main(int argc, char **argv)
 {
