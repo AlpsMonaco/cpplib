@@ -1,4 +1,4 @@
-// #define __BUILD_LIB_MODE 1
+#define __BUILD_LIB_MODE 1
 #ifdef __BUILD_LIB_MODE
 #ifndef __MARCO_PRINTLN
 #define __MARCO_PRINTLN
@@ -134,7 +134,7 @@ public:
 	}
 };
 
-int BeginBuildLIB(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	if (argc > 1)
 	{
@@ -147,8 +147,6 @@ int BeginBuildLIB(int argc, char **argv)
 	BuildLIB::Start();
 	return 0;
 }
-
-#endif
 
 #ifndef __MARCO_PRINTLN
 #define __MARCO_PRINTLN
@@ -222,6 +220,8 @@ void ClientMethod()
 	c.Close();
 }
 
+#else
+
 int main(int argc, char **argv)
 {
 	std::thread serverThread(ServerMethod);
@@ -232,3 +232,5 @@ int main(int argc, char **argv)
 	clientThread.join();
 	return 0;
 }
+
+#endif
