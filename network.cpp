@@ -34,20 +34,32 @@ namespace network
 			}
 		}
 	}
+
+	inline void SetErrorMsg(int *errcode, char **errmsg, int code, char *msg)
+	{
+		*errcode = code;
+		if (*errmsg != nullptr)
+			free(*errmsg);
+		*errmsg = (char *)malloc(strlen(msg) + 1);
+		strcpy(*errmsg, msg);
+	}
+
+	inline bool CreateSocket(int &fd, const int &af, const int &sock, int &errcode, char **errmsg)
+	{
+		fd = socket(af, sock, 0);
+		if (fd == -1)
+		{
+			SetErrorMsg(&errcode, errmsg, -1, "invalid socket");
+			return false;
+		}
+		return true;
+	}
 }
 
 using namespace network;
 
 int Socket::GetPort() { return this->port; }
 const char *Socket::GetAddr() { return this->addr; }
-inline void SetErrorMsg(int *errcode, char **errmsg, int code, char *msg)
-{
-	*errcode = code;
-	if (*errmsg != nullptr)
-		free(*errmsg);
-	*errmsg = (char *)malloc(strlen(msg) + 1);
-	strcpy(*errmsg, msg);
-}
 
 Socket::Socket()
 {
@@ -57,7 +69,7 @@ Socket::Socket()
 	this->port = 0;
 	this->fd = 0;
 	this->errmsg = nullptr;
-	this->addr = nullptr;
+	this->addr[0] = 0;
 }
 
 Socket &Socket::operator=(const Socket &s)
@@ -67,7 +79,7 @@ Socket &Socket::operator=(const Socket &s)
 	this->fd = s.fd;
 	this->af = s.af;
 	this->sock = s.sock;
-	this->addr = nullptr;
+	this->addr[0] = 0;
 	this->errmsg = nullptr;
 	if (s.errmsg != nullptr)
 	{
@@ -75,10 +87,7 @@ Socket &Socket::operator=(const Socket &s)
 		strcpy(this->errmsg, s.errmsg);
 	}
 	if (s.addr != nullptr)
-	{
-		this->addr = (char *)malloc(strlen(s.addr) + 1);
 		strcpy(this->addr, s.addr);
-	}
 	return *this;
 }
 
@@ -86,14 +95,14 @@ Socket &Socket::operator=(Socket &&s)
 {
 	this->af = s.af;
 	this->sock = s.sock;
-	this->addr = s.addr;
 	this->port = s.port;
 	this->fd = s.fd;
 	this->errmsg = s.errmsg;
 	this->errcode = s.errcode;
+	strcpy(this->addr, s.addr);
 	s.af = 0;
 	s.sock = 0;
-	s.addr = nullptr;
+	s.addr[0] = 0;
 	s.port = 0;
 	s.fd = 0;
 	s.errmsg = nullptr;
@@ -108,7 +117,7 @@ Socket::Socket(const Socket &s)
 	this->fd = s.fd;
 	this->af = s.af;
 	this->sock = s.sock;
-	this->addr = nullptr;
+	this->addr[0] = 0;
 	this->errmsg = nullptr;
 	if (s.errmsg != nullptr)
 	{
@@ -116,41 +125,48 @@ Socket::Socket(const Socket &s)
 		strcpy(this->errmsg, s.errmsg);
 	}
 	if (s.addr != nullptr)
-	{
-		this->addr = (char *)malloc(strlen(s.addr) + 1);
 		strcpy(this->addr, s.addr);
-	}
 }
 
 Socket::Socket(Socket &&s)
 {
 	this->af = s.af;
 	this->sock = s.sock;
-	this->addr = s.addr;
+	strcpy(this->addr, s.addr);
 	this->port = s.port;
 	this->fd = s.fd;
 	this->errmsg = s.errmsg;
 	this->errcode = s.errcode;
 	s.af = 0;
 	s.sock = 0;
-	s.addr = nullptr;
+	s.addr[0] = 0;
 	s.port = 0;
 	s.fd = 0;
 	s.errmsg = nullptr;
 	s.errcode = 0;
 }
 
+Socket::Socket(const int &af, const int &sock)
+{
+	this->af = af;
+	this->sock = sock;
+	this->errcode = 0;
+	this->port = 0;
+	this->fd = 0;
+	this->errmsg = nullptr;
+	this->addr[0] = 0;
+}
+
 Socket::Socket(int fd, const char *addr, const int &port, const int &af, const int &sock)
 {
 	this->fd = fd;
+	this->addr[0] = 0;
+	strcpy(this->addr, addr);
 	this->port = port;
 	this->af = af;
 	this->sock = sock;
 	this->errcode = 0;
-	this->addr = nullptr;
 	this->errmsg = nullptr;
-	this->addr = (char *)malloc(strlen(addr) + 1);
-	strcpy(this->addr, addr);
 }
 
 void Socket::SetError(const int &errcode, const char *errmsg)
@@ -182,21 +198,15 @@ Socket::Socket(const char *addr, const int &port, const int &af, const int &sock
 	this->port = port;
 	this->af = af;
 	this->sock = sock;
-	this->addr = (char *)malloc(strlen(addr) + 1);
 	strcpy(this->addr, addr);
 	this->errcode = 0;
 	this->errmsg = nullptr;
-	this->fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (this->fd == INVALID_SOCKET)
-	{
-		SetErrorMsg(&this->errcode, &this->errmsg, INVALID_SOCKET, "Socket is invalid");
-		return;
-	}
+	CreateSocket(this->fd, af, sock, this->errcode, &this->errmsg);
 }
 
 Socket::~Socket()
 {
-	free(this->addr);
+	this->addr[0] = 0;
 	if (this->errmsg != nullptr)
 	{
 		free(this->errmsg);
@@ -250,6 +260,10 @@ Client &Client::operator=(Client &&c)
 
 #ifdef _WIN32
 
+Client::Client() : Socket(AF_INET, SOCK_STREAM)
+{
+}
+
 bool Client::Connect()
 {
 	SOCKADDR_IN addr;
@@ -259,16 +273,27 @@ bool Client::Connect()
 	int ret = connect(fd, (sockaddr *)&addr, sizeof(addr));
 	if (ret)
 	{
-		SetError(ret, "connect failed");
+		SetError(WSAGetLastError(), "connect failed");
 		return false;
 	}
 	return true;
+}
+
+bool Client::Connect(const char *addr, const int &port)
+{
+	this->port = port;
+	strcpy(this->addr, addr);
+	if (!CreateSocket(this->fd, AF_INET, SOCK_STREAM, this->errcode, &this->errmsg))
+		return false;
+	return this->Connect();
 }
 
 Server::Server(const char *addr, const int &port) : Socket(addr, port, AF_INET, SOCK_STREAM) {}
 Server::~Server() {}
 bool Server::Listen()
 {
+	if (this->errcode)
+		return false;
 	SOCKADDR_IN addr;
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(this->port);

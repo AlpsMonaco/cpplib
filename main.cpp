@@ -1,7 +1,5 @@
-// #define __BETA 1
-#ifndef __BETA
-#ifdef _WIN32
-
+// #define __BUILD_LIB_MODE 1
+#ifdef __BUILD_LIB_MODE
 #ifndef __MARCO_PRINTLN
 #define __MARCO_PRINTLN
 #include <iostream>
@@ -136,7 +134,7 @@ public:
 	}
 };
 
-int main(int argc, char **argv)
+int BeginBuildLIB(int argc, char **argv)
 {
 	if (argc > 1)
 	{
@@ -150,54 +148,87 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-#else
-
-#include <dirent.h>
-#include <stdio.h>
-
-int main(void)
-{
-	DIR *d;
-	struct dirent *dir;
-	d = opendir(".");
-	if (d)
-	{
-		while ((dir = readdir(d)) != NULL)
-		{
-			printf("%s\n", dir->d_name);
-		}
-		closedir(d);
-	}
-	return (0);
-}
-
 #endif
 
-#else
+#ifndef __MARCO_PRINTLN
+#define __MARCO_PRINTLN
+#include <iostream>
+#define Println(word)                   \
+	do                                  \
+	{                                   \
+		std::cout << word << std::endl; \
+	} while (0)
+#endif
 
-#include "db.h"
-#include "iostream"
+#include "network.h"
+#include "thread"
+const int port = 54444;
+const char *addr = "127.0.0.1";
+
+void ServerMethod()
+{
+	network::tcp::Server s(addr, port);
+	if (!s.Listen())
+	{
+		Println("server listen failed");
+		return;
+	}
+	network::Socket c;
+	if (!s.Accept(c))
+	{
+		Println("Accept failed");
+		return;
+	}
+	char buf[128];
+	int size = c.Send("Hello Client", 13);
+	if (size == -1)
+	{
+		Println("Send failed");
+		return;
+	}
+	size = c.Recv(buf, 128);
+	if (size == -1)
+	{
+		Println("Recv failed");
+		return;
+	}
+	Println(buf);
+	c.Close();
+	s.Close();
+}
+
+void ClientMethod()
+{
+	network::tcp::Client c;
+	if (!c.Connect(addr, port))
+	{
+		Println("connect failed");
+		return;
+	}
+	char buf[128];
+	int size = c.Recv(buf, 128);
+	if (size == -1)
+	{
+		Println("Recv failed");
+		return;
+	}
+	Println(buf);
+	size = c.Send("Hello Server", 13);
+	if (size == -1)
+	{
+		Println("Send failed");
+		return;
+	}
+	c.Close();
+}
 
 int main(int argc, char **argv)
 {
-	db::MySQL mysql;
-	if (!mysql.Connect("172.27.208.1", 33123, "hotgame", "hotgame82year.HL", "mysql"))
-	{
-		std::cout << mysql.Errno() << mysql.Error() << std::endl;
-		return 1;
-	}
+	std::thread serverThread(ServerMethod);
+	std::this_thread::sleep_for(std::chrono::seconds(3));
+	std::thread clientThread(ClientMethod);
 
-	auto result = mysql.Query("show databases;");
-	if (result.errCode)
-	{
-		std::cout << mysql.Errno() << mysql.Error() << std::endl;
-		return 1;
-	}
-
-	for (auto v : result.vector)
-		for (auto s : v)
-			std::cout << s << std::endl;
+	serverThread.join();
+	clientThread.join();
 	return 0;
 }
-
-#endif

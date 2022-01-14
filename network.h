@@ -10,8 +10,9 @@ namespace network
 		Socket();
 		Socket(Socket &&s);
 		Socket(const Socket &s);
-		Socket(int fd, const char *addr, const int &port, const int &af, const int &sock);
+		Socket(const int &af, const int &sock);
 		Socket(const char *addr, const int &port, const int &af, const int &sock);
+		Socket(int fd, const char *addr, const int &port, const int &af, const int &sock);
 		virtual ~Socket();
 
 		Socket &operator=(const Socket &s);
@@ -30,7 +31,7 @@ namespace network
 		void SetError(const int &errcode, const char *errmsg);
 		int af;
 		int sock;
-		char *addr;
+		char addr[16];
 		int port;
 		int fd;
 	};
@@ -40,14 +41,17 @@ namespace network
 		class Client : public Socket
 		{
 		public:
-			Client(const Client &c) : Socket(c){};
+			Client();
+			Client(const Client &c);
 			Client(Client &&c);
 			Client(const char *addr, const int &port);
-			Client &operator=(const Client &c);
-			Client &operator=(Client &&c);
 			~Client();
 
+			Client &operator=(const Client &c);
+			Client &operator=(Client &&c);
+
 			bool Connect();
+			bool Connect(const char *addr, const int &port);
 		};
 
 		class Server : public Socket
