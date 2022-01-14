@@ -1,8 +1,11 @@
 #include "network.h"
 
 #ifdef _WIN32
-#include "WinSock2.h"
-#include "stdio.h"
+#include <WinSock2.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <locale.h>
+#include <stringapiset.h>
 using socklen_t = int;
 #pragma comment(lib, "WS2_32.lib")
 #else
@@ -65,36 +68,26 @@ namespace network
 	{
 		wchar_t buf[256];
 		this->errcode = WSAGetLastError();
+		FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, this->errcode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, (sizeof(buf) / sizeof(wchar_t)), NULL);
 		if (this->errmsg != nullptr)
 			free(this->errmsg);
+		int length = wcslen(buf) * 3 + 1;
+		this->errmsg = (char *)malloc(length);
+		wcstombs(this->errmsg, buf, length);
 	}
-// 	SocketError GetSocketError()
-// 	{
-// 		SocketError err;
-// 		wchar_t buf[256];
-// 		err.code = WSAGetLastError();
-// 		FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err.code, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, (sizeof(buf) / sizeof(wchar_t)), NULL);
-// 		static char result[256];
-// 		printf("%ws", buf);
-// 		return err;
-// 	}
 #else
 	void Socket::SocketError()
 	{
+		const int maxErrMsgSize = 128;
 		this->errcode = errno;
-		const char *errmsg = strerror(this->errcode);
+		char buf[maxErrMsgSize];
+		char *errmsg = strerror_r(this->errcode, buf, maxErrMsgSize);
+		int length = strlen(errmsg);
 		if (this->errmsg != nullptr)
 			free(this->errmsg);
-		this->errmsg = (char *)malloc(strlen(errmsg) + 1);
+		this->errmsg = (char *)malloc(length + 1);
 		strcpy(this->errmsg, errmsg);
 	}
-// 	SocketError GetSocketError()
-// 	{
-// 		SocketError err;
-// 		err.code = errno;
-// 		err.msg = strerror(err.code);
-// 		return err;
-// 	}
 #endif
 
 }
@@ -257,6 +250,7 @@ struct WSAManager
 {
 	WSAManager()
 	{
+		setlocale(LC_ALL, "");
 		WSADATA wsadata;
 		WSAStartup(MAKEWORD(2, 2), &wsadata);
 		atexit(Clean);

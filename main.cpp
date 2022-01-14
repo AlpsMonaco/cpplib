@@ -1,4 +1,4 @@
-// #define __BUILD_LIB_MODE 1
+#define __BUILD_LIB_MODE 1
 #ifdef __BUILD_LIB_MODE
 #ifndef __MARCO_PRINTLN
 #define __MARCO_PRINTLN
@@ -162,7 +162,7 @@ int main(int argc, char **argv)
 
 #include "network.h"
 #include "thread"
-const int port = 55555;
+const int port = 33123;
 const char *addr = "127.0.0.1";
 
 void ServerMethod()
@@ -239,18 +239,35 @@ void PrintMemory(const void *p)
 
 int main(int argc, char **argv)
 {
-	Println(sizeof(wchar_t));
-	const wchar_t *ws = L"你好";
-	const char *s = "你好";
-	PrintMemory(ws);
-	PrintMemory(s);
-	Println(ws);
+	// setlocale(LC_ALL, "");
+	// int BUFFER_SIZE = 50;
+	// size_t ret;
+	// char *MB = (char *)malloc(BUFFER_SIZE);
+	// wchar_t *WC = L"http://www.w3cschool.cc";
 
-	// std::thread serverThread(ServerMethod);
-	// std::this_thread::sleep_for(std::chrono::seconds(3));
+	// /* 转换宽字符字符串 */
+	// ret = wcstombs(MB, WC, BUFFER_SIZE);
+
+	// printf("要转换的字符数 = %u\n", ret);
+	// printf("多字节字符 = %s\n\n", MB);
+
+	// return (0);
+	// const wchar_t *a = L"一二三四五六七八九十";
+	// char b[100];
+	// int j = wcslen(a);
+	// memset(b, 0, 100);
+	// wcstombs(b, a, 100);
+	// Println(b);
+	// const wchar_t *a = L"你";
+	// const char *b = "你";
+	// int i = wcslen(a);
+	// i = strlen(b);
+
+	std::thread serverThread(ServerMethod);
+	std::this_thread::sleep_for(std::chrono::seconds(3));
 	// std::thread clientThread(ClientMethod);
 
-	// serverThread.join();
+	serverThread.join();
 	// clientThread.join();
 	return 0;
 }
