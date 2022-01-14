@@ -15,6 +15,8 @@ using socklen_t = int;
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/unistd.h>
+#include <errno.h>
+#include <error.h>
 
 #endif
 
@@ -59,15 +61,40 @@ namespace network
 	}
 
 #ifdef _WIN32
-	inline int GetSocketErrno()
+	void Socket::SocketError()
 	{
-		return WSAGetLastError();
+		wchar_t buf[256];
+		this->errcode = WSAGetLastError();
+		if (this->errmsg != nullptr)
+			free(this->errmsg);
 	}
+// 	SocketError GetSocketError()
+// 	{
+// 		SocketError err;
+// 		wchar_t buf[256];
+// 		err.code = WSAGetLastError();
+// 		FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err.code, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, (sizeof(buf) / sizeof(wchar_t)), NULL);
+// 		static char result[256];
+// 		printf("%ws", buf);
+// 		return err;
+// 	}
 #else
-	inline int GetSocketErrno()
+	void Socket::SocketError()
 	{
-		return -1;
+		this->errcode = errno;
+		const char *errmsg = strerror(this->errcode);
+		if (this->errmsg != nullptr)
+			free(this->errmsg);
+		this->errmsg = (char *)malloc(strlen(errmsg) + 1);
+		strcpy(this->errmsg, errmsg);
 	}
+// 	SocketError GetSocketError()
+// 	{
+// 		SocketError err;
+// 		err.code = errno;
+// 		err.msg = strerror(err.code);
+// 		return err;
+// 	}
 #endif
 
 }
@@ -183,27 +210,18 @@ Socket::Socket(int fd, const char *addr, const int &port, const int &af, const i
 	this->errmsg = nullptr;
 }
 
-void Socket::SetError(const int &errcode, const char *errmsg)
-{
-	this->errcode = errcode;
-	if (this->errmsg != nullptr)
-		free(this->errmsg);
-	this->errmsg = (char *)malloc(strlen(errmsg) + 1);
-	strcpy(this->errmsg, errmsg);
-}
-
 int Socket::Send(const char *buf, const int &bufSize)
 {
 	int size = send(fd, buf, bufSize, 0);
 	if (size == -1)
-		this->SetError(size, "send failed");
+		this->SocketError();
 	return size;
 }
 
 int Socket::Recv(char *buf, const int &bufSize)
 {
 	int size = recv(fd, buf, bufSize, 0);
-	this->SetError(size, "recv failed");
+	this->SocketError();
 	return size;
 }
 
@@ -294,7 +312,7 @@ bool Client::Connect()
 	int ret = connect(fd, (sockaddr *)&addr, sizeof(addr));
 	if (ret)
 	{
-		SetError(GetSocketErrno(), "connect failed");
+		SocketError();
 		return false;
 	}
 	return true;
@@ -311,13 +329,13 @@ bool Server::Listen()
 	int ret = bind(fd, (sockaddr *)&addr, sizeof(addr));
 	if (ret)
 	{
-		SetErrorMsg(&this->errcode, &this->errmsg, GetSocketErrno(), "bind failed");
+		SocketError();
 		return false;
 	}
 	ret = listen(fd, 10);
 	if (ret)
 	{
-		SetErrorMsg(&this->errcode, &this->errmsg, GetSocketErrno(), "listen failed");
+		SocketError();
 		return false;
 	}
 	return true;

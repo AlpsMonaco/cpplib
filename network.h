@@ -28,7 +28,7 @@ namespace network
 		char *errmsg;
 
 	protected:
-		void SetError(const int &errcode, const char *errmsg);
+		void SocketError();
 		int af;
 		int sock;
 		char addr[16];

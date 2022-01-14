@@ -162,7 +162,7 @@ int main(int argc, char **argv)
 
 #include "network.h"
 #include "thread"
-const int port = 55455;
+const int port = 55555;
 const char *addr = "127.0.0.1";
 
 void ServerMethod()
@@ -170,12 +170,14 @@ void ServerMethod()
 	network::tcp::Server s(addr, port);
 	if (!s.Listen())
 	{
+		Println(s.errmsg);
 		Println("server listen failed");
 		return;
 	}
 	network::Socket c;
 	if (!s.Accept(c))
 	{
+		Println(s.errmsg);
 		Println("Accept failed");
 		return;
 	}
@@ -202,6 +204,7 @@ void ClientMethod()
 	network::tcp::Client c;
 	if (!c.Connect(addr, port))
 	{
+		Println(c.errmsg);
 		Println("connect failed");
 		return;
 	}
@@ -224,14 +227,31 @@ void ClientMethod()
 
 #include "stringext.h"
 
+void PrintMemory(const void *p)
+{
+	char *a = (char *)p;
+	for (int i = 0; i < 10; i++)
+	{
+		Println((unsigned int)(unsigned char)a[i]);
+	}
+	Println("Done");
+}
+
 int main(int argc, char **argv)
 {
-	std::thread serverThread(ServerMethod);
-	std::this_thread::sleep_for(std::chrono::seconds(3));
-	std::thread clientThread(ClientMethod);
+	Println(sizeof(wchar_t));
+	const wchar_t *ws = L"你好";
+	const char *s = "你好";
+	PrintMemory(ws);
+	PrintMemory(s);
+	Println(ws);
 
-	serverThread.join();
-	clientThread.join();
+	// std::thread serverThread(ServerMethod);
+	// std::this_thread::sleep_for(std::chrono::seconds(3));
+	// std::thread clientThread(ClientMethod);
+
+	// serverThread.join();
+	// clientThread.join();
 	return 0;
 }
 
