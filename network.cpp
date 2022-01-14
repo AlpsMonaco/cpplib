@@ -52,14 +52,11 @@ namespace network
 		strcpy(*errmsg, msg);
 	}
 
-	inline bool CreateSocket(int &fd, const int &af, const int &sock, int &errcode, char **errmsg)
+	inline bool CreateSocket(int &fd, const int &af, const int &sock)
 	{
 		fd = socket(af, sock, 0);
 		if (fd == -1)
-		{
-			SetErrorMsg(&errcode, errmsg, -1, "invalid socket");
 			return false;
-		}
 		return true;
 	}
 
@@ -226,7 +223,8 @@ Socket::Socket(const char *addr, const int &port, const int &af, const int &sock
 	strcpy(this->addr, addr);
 	this->errcode = 0;
 	this->errmsg = nullptr;
-	CreateSocket(this->fd, af, sock, this->errcode, &this->errmsg);
+	if (!CreateSocket(this->fd, af, sock))
+		SocketError();
 }
 
 Socket::~Socket()
@@ -290,7 +288,7 @@ bool Client::Connect(const char *addr, const int &port)
 {
 	this->port = port;
 	strcpy(this->addr, addr);
-	if (!CreateSocket(this->fd, AF_INET, SOCK_STREAM, this->errcode, &this->errmsg))
+	if (!CreateSocket(this->fd, AF_INET, SOCK_STREAM))
 		return false;
 	return this->Connect();
 }

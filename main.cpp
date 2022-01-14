@@ -239,6 +239,11 @@ void PrintMemory(const void *p)
 
 int main(int argc, char **argv)
 {
+	network::Socket s("128.9.9.9", 0, 99, 99);
+	if (s.errcode)
+		Println(s.errmsg);
+
+	Println(s.errcode);
 	// setlocale(LC_ALL, "");
 	// int BUFFER_SIZE = 50;
 	// size_t ret;
@@ -263,11 +268,11 @@ int main(int argc, char **argv)
 	// int i = wcslen(a);
 	// i = strlen(b);
 
-	std::thread serverThread(ServerMethod);
-	std::this_thread::sleep_for(std::chrono::seconds(3));
+	// std::thread serverThread(ServerMethod);
+	// std::this_thread::sleep_for(std::chrono::seconds(3));
 	// std::thread clientThread(ClientMethod);
 
-	serverThread.join();
+	// serverThread.join();
 	// clientThread.join();
 	return 0;
 }
