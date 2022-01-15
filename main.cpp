@@ -1,4 +1,4 @@
-#define __BUILD_LIB_MODE 1
+// #define __BUILD_LIB_MODE 1
 #ifdef __BUILD_LIB_MODE
 #ifndef __MARCO_PRINTLN
 #define __MARCO_PRINTLN
@@ -225,35 +225,62 @@ void ClientMethod()
 	c.Close();
 }
 
-#include "stringext.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <WinSock2.h>
 
-void PrintMemory(const void *p)
+void NetToHost(const void *net, char dst[16])
 {
-	char *a = (char *)p;
-	for (int i = 0; i < 10; i++)
+	unsigned char *temp = (unsigned char *)net;
+	for (int i = 0; i < 4; i++)
 	{
-		Println((unsigned int)(unsigned char)a[i]);
+		sprintf(dst, "%u", temp[i]);
+		do
+		{
+		} while (*(++dst) != 0);
+
+		if (i != 3)
+		{
+			*dst = '.';
+			dst++;
+		}
 	}
-	Println("Done");
 }
 
-int main(int argc, char **argv)
+bool IsDomain(const char *ip)
 {
-	network::tcp::Server s("127.0.0.1", 33124);
-	s.Listen();
-	if (s.errcode)
+	char c;
+	while ((c = *ip++) != 0)
 	{
-		Println(s.errcode);
-		Println(s.errmsg);
+		if (c < 46 || c > 57)
+			return true;
 	}
-	s.Close();
-	network::Socket c;
-	s.Accept(c);
-	if (s.errcode)
+	return false;
+}
+
+bool DNSResolve(const char *name, char *dst)
+{
+	hostent *host = gethostbyname(name);
+	if (!host)
+		return false;
+	if (host->h_addr_list[0])
+		NetToHost(host->h_addr_list[0], dst);
+	return true;
+}
+
+#pragma comment(lib, "ws2_32.lib")
+int main()
+{
+	WSADATA wsaData;
+	WSAStartup(MAKEWORD(2, 2), &wsaData);
+	const char *ip = "idle-as.hotgamehl.com";
+	char dst[16] = "";
+	if (!DNSResolve(ip, dst))
 	{
-		Println(s.errcode);
-		Println(s.errmsg);
+		return 1;
 	}
+	Println(dst);
+	system("pause");
 	return 0;
 }
 

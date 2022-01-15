@@ -43,21 +43,33 @@ namespace network
 		}
 	}
 
-	// inline void SetErrorMsg(int *errcode, char **errmsg, const int &code, const char *msg)
-	// {
-	// 	*errcode = code;
-	// 	if (*errmsg != nullptr)
-	// 		free(*errmsg);
-	// 	*errmsg = (char *)malloc(strlen(msg) + 1);
-	// 	strcpy(*errmsg, msg);
-	// }
-
 	inline bool CreateSocket(int &fd, const int &af, const int &sock)
 	{
 		fd = socket(af, sock, 0);
 		if (fd == -1)
 			return false;
 		return true;
+	}
+
+	bool DNSResolve(const char *name, char *dst)
+	{
+		hostent *host = gethostbyname(name);
+		if (!host)
+			return false;
+		if (host->h_addr_list[0])
+			NetToHost(host->h_addr_list[0], dst);
+		return true;
+	}
+
+	bool IsDomain(const char *ip)
+	{
+		char c;
+		while ((c = *ip++) != 0)
+		{
+			if (c < 46 || c > 57)
+				return true;
+		}
+		return false;
 	}
 
 #ifdef _WIN32

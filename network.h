@@ -4,6 +4,10 @@
 
 namespace network
 {
+	bool IsDomain(const char *ip);
+	void NetToHost(const void *net, char dst[16]);
+	bool DNSResolve(const char *name, char *dst);
+
 	class Socket
 	{
 	public:
