@@ -239,41 +239,21 @@ void PrintMemory(const void *p)
 
 int main(int argc, char **argv)
 {
-	network::Socket s("128.9.9.9", 0, 99, 99);
+	network::tcp::Server s("127.0.0.1", 33124);
+	s.Listen();
 	if (s.errcode)
+	{
+		Println(s.errcode);
 		Println(s.errmsg);
-
-	Println(s.errcode);
-	// setlocale(LC_ALL, "");
-	// int BUFFER_SIZE = 50;
-	// size_t ret;
-	// char *MB = (char *)malloc(BUFFER_SIZE);
-	// wchar_t *WC = L"http://www.w3cschool.cc";
-
-	// /* 转换宽字符字符串 */
-	// ret = wcstombs(MB, WC, BUFFER_SIZE);
-
-	// printf("要转换的字符数 = %u\n", ret);
-	// printf("多字节字符 = %s\n\n", MB);
-
-	// return (0);
-	// const wchar_t *a = L"一二三四五六七八九十";
-	// char b[100];
-	// int j = wcslen(a);
-	// memset(b, 0, 100);
-	// wcstombs(b, a, 100);
-	// Println(b);
-	// const wchar_t *a = L"你";
-	// const char *b = "你";
-	// int i = wcslen(a);
-	// i = strlen(b);
-
-	// std::thread serverThread(ServerMethod);
-	// std::this_thread::sleep_for(std::chrono::seconds(3));
-	// std::thread clientThread(ClientMethod);
-
-	// serverThread.join();
-	// clientThread.join();
+	}
+	s.Close();
+	network::Socket c;
+	s.Accept(c);
+	if (s.errcode)
+	{
+		Println(s.errcode);
+		Println(s.errmsg);
+	}
 	return 0;
 }
 

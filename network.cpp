@@ -43,14 +43,14 @@ namespace network
 		}
 	}
 
-	inline void SetErrorMsg(int *errcode, char **errmsg, const int &code, const char *msg)
-	{
-		*errcode = code;
-		if (*errmsg != nullptr)
-			free(*errmsg);
-		*errmsg = (char *)malloc(strlen(msg) + 1);
-		strcpy(*errmsg, msg);
-	}
+	// inline void SetErrorMsg(int *errcode, char **errmsg, const int &code, const char *msg)
+	// {
+	// 	*errcode = code;
+	// 	if (*errmsg != nullptr)
+	// 		free(*errmsg);
+	// 	*errmsg = (char *)malloc(strlen(msg) + 1);
+	// 	strcpy(*errmsg, msg);
+	// }
 
 	inline bool CreateSocket(int &fd, const int &af, const int &sock)
 	{
@@ -340,7 +340,7 @@ bool Server::Accept(Socket &socket)
 	int fd;
 	if ((fd = accept(this->fd, (sockaddr *)&client, &addrlen)) == SOCKET_ERROR)
 	{
-		SetErrorMsg(&this->errcode, &this->errmsg, SOCKET_ERROR, "accept error");
+		SocketError();
 		return false;
 	}
 	int port = ntohs(client.sin_port);
