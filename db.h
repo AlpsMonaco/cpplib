@@ -33,7 +33,7 @@ namespace db
 		MySQL();
 		~MySQL();
 
-		inline bool Connect(const char *host, int port, const char *user, const char *password, const char *database) { return mysql_real_connect(this->mysql, host, user, password, database, port, nullptr, 0) != NULL; }
+		inline bool Connect(const char *host, const int &port, const char *user, const char *password, const char *database) { return mysql_real_connect(this->mysql, host, user, password, database, port, nullptr, 0) != NULL; }
 		inline const char *Error() { return mysql_error(this->mysql); }
 		inline unsigned int Errno() { return mysql_errno(this->mysql); }
 		MySQLResult Query(const char *command);

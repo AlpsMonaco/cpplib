@@ -16,9 +16,8 @@ namespace stringext
 	void TrimSpaceLeft(std::string &s);
 	void TrimSpaceRight(std::string &s);
 	void TrimSpace(std::string &s);
-	std::string Join(std::vector<std::string> &stringVector, const std::string &sep);
-	std::string Join(std::vector<std::string> &stringVector, const char *sep);
-	// std::string ReadFileAll(const char *fileName);
+	std::string Join(const std::vector<std::string> &stringVector, const std::string &sep);
+	std::string Join(const std::vector<std::string> &stringVector, const char *sep);
 }
 
 #endif
