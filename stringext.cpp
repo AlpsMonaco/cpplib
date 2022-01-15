@@ -2,7 +2,7 @@
 
 namespace stringext
 {
-	void ReplaceString(std::string &s, const std::string &from, const std::string &to)
+	void ReplaceAll(std::string &s, const std::string &from, const std::string &to)
 	{
 		size_t index = 0;
 		while ((index = s.find(from, index)) != std::string::npos)
@@ -12,8 +12,8 @@ namespace stringext
 		}
 	}
 
-	void ReplaceString(std::string &s, const char *from, const char *to) { ReplaceString(s, std::string(from), std::string(to)); }
-	std::vector<std::string> SplitString(const std::string &s, const std::string &sep)
+	void ReplaceAll(std::string &s, const char *from, const char *to) { ReplaceAll(s, std::string(from), std::string(to)); }
+	std::vector<std::string> Split(const std::string &s, const std::string &sep)
 	{
 		size_t begin = 0;
 		size_t end = 0;
@@ -29,7 +29,7 @@ namespace stringext
 		return v;
 	}
 
-	std::vector<std::string> SplitString(const std::string &s, const char *sep) { return SplitString(s, std::string(sep)); }
+	std::vector<std::string> Split(const std::string &s, const char *sep) { return Split(s, std::string(sep)); }
 	const std::string SpaceCharacters = " \t\r\n";
 	void TrimSpace(std::string &s)
 	{

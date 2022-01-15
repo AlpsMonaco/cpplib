@@ -51,8 +51,8 @@ public:
 		}
 
 		stringext::TrimSpace(result.output);
-		stringext::ReplaceString(result.output, "\r\n", "\n");
-		v = stringext::SplitString(result.output, "\n");
+		stringext::ReplaceAll(result.output, "\r\n", "\n");
+		v = stringext::Split(result.output, "\n");
 		std::vector<std::string> resultFileList;
 		for (auto it = v.begin(); it < v.end(); it++)
 		{
@@ -118,8 +118,8 @@ public:
 			ErrorHandle(result.output);
 			return;
 		}
-		stringext::ReplaceString(result.output, "\r\n", "\n");
-		std::vector<std::string> resultVector = stringext::SplitString(result.output, "\n");
+		stringext::ReplaceAll(result.output, "\r\n", "\n");
+		std::vector<std::string> resultVector = stringext::Split(result.output, "\n");
 		for (auto it : resultVector)
 		{
 			for (auto extIt : cleanExtList)

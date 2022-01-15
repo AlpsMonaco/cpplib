@@ -7,10 +7,10 @@
 
 namespace stringext
 {
-	void ReplaceString(std::string &s, const std::string &from, const std::string &to);
-	void ReplaceString(std::string &s, const char *from, const char *to);
-	std::vector<std::string> SplitString(const std::string &s, const std::string &sep);
-	std::vector<std::string> SplitString(const std::string &s, const char *sep);
+	void ReplaceAll(std::string &s, const std::string &from, const std::string &to);
+	void ReplaceAll(std::string &s, const char *from, const char *to);
+	std::vector<std::string> Split(const std::string &s, const std::string &sep);
+	std::vector<std::string> Split(const std::string &s, const char *sep);
 	template <typename T>
 	std::string ReadFileAll(T &fs) { return std::string(std::istreambuf_iterator<char>(fs), std::istreambuf_iterator<char>()); }
 	void TrimSpaceLeft(std::string &s);
