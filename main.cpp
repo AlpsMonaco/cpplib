@@ -1,4 +1,4 @@
-// #define __BUILD_LIB_MODE 1
+#define __BUILD_LIB_MODE 1
 #ifdef __BUILD_LIB_MODE
 #ifndef __MARCO_PRINTLN
 #define __MARCO_PRINTLN
@@ -160,128 +160,19 @@ int main(int argc, char **argv)
 	} while (0)
 #endif
 
-#include "network.h"
-#include "thread"
-const int port = 33123;
-const char *addr = "127.0.0.1";
+#include "keyboard.h"
 
-void ServerMethod()
+bool ListenKeyboard(keyboard::KeyCode &keyCode, keyboard::KeyStatus &keyStatus)
 {
-	network::tcp::Server s(addr, port);
-	if (!s.Listen())
-	{
-		Println(s.errmsg);
-		Println("server listen failed");
-		return;
-	}
-	network::Socket c;
-	if (!s.Accept(c))
-	{
-		Println(s.errmsg);
-		Println("Accept failed");
-		return;
-	}
-	char buf[128];
-	int size = c.Send("Hello Client", 13);
-	if (size == -1)
-	{
-		Println("Send failed");
-		return;
-	}
-	size = c.Recv(buf, 128);
-	if (size == -1)
-	{
-		Println("Recv failed");
-		return;
-	}
-	Println(buf);
-	c.Close();
-	s.Close();
-}
-
-void ClientMethod()
-{
-	network::tcp::Client c;
-	if (!c.Connect(addr, port))
-	{
-		Println(c.errmsg);
-		Println("connect failed");
-		return;
-	}
-	char buf[128];
-	int size = c.Recv(buf, 128);
-	if (size == -1)
-	{
-		Println("Recv failed");
-		return;
-	}
-	Println(buf);
-	size = c.Send("Hello Server", 13);
-	if (size == -1)
-	{
-		Println("Send failed");
-		return;
-	}
-	c.Close();
-}
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <WinSock2.h>
-
-void NetToHost(const void *net, char dst[16])
-{
-	unsigned char *temp = (unsigned char *)net;
-	for (int i = 0; i < 4; i++)
-	{
-		sprintf(dst, "%u", temp[i]);
-		do
-		{
-		} while (*(++dst) != 0);
-
-		if (i != 3)
-		{
-			*dst = '.';
-			dst++;
-		}
-	}
-}
-
-bool IsDomain(const char *ip)
-{
-	char c;
-	while ((c = *ip++) != 0)
-	{
-		if (c < 46 || c > 57)
-			return true;
-	}
-	return false;
-}
-
-bool DNSResolve(const char *name, char *dst)
-{
-	hostent *host = gethostbyname(name);
-	if (!host)
-		return false;
-	if (host->h_addr_list[0])
-		NetToHost(host->h_addr_list[0], dst);
+	if (keyCode == VK_ESCAPE)
+		keyboard::CancelOnKeyPress();
+	printf("keycode is %ld,keystatus is %I64d\r\n", keyCode, keyStatus);
 	return true;
 }
 
-#pragma comment(lib, "ws2_32.lib")
-int main()
+int main(int argc, char **argv)
 {
-	WSADATA wsaData;
-	WSAStartup(MAKEWORD(2, 2), &wsaData);
-	const char *ip = "idle-as.hotgamehl.com";
-	char dst[16] = "";
-	if (!DNSResolve(ip, dst))
-	{
-		return 1;
-	}
-	Println(dst);
-	system("pause");
-	return 0;
+	keyboard::OnKeyPress(keyboard::PressKeyDetect);
 }
 
 #endif
