@@ -48,6 +48,9 @@ namespace keyboard
 {
 	using KeyCode = DWORD;
 	using KeyStatus = WPARAM;
+
+	// If the callback returns false,the next hook will not be called,other applicatioins
+	// will not receive keyboard event.
 	using OnKeyPressCallback = bool (*)(KeyCode &keyCode, KeyStatus &keyStatus);
 
 	void OnKeyPress(OnKeyPressCallback);
