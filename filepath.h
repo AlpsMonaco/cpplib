@@ -8,8 +8,8 @@ namespace filepath
 {
 	void ToSlash(std::string &filepath);
 	void ToBackslash(std::string &filepath);
-	std::string FileExtName(const std::string &filepath);
-	std::string FileBaseName(const std::string &filepath);
+	std::string ExtName(const std::string &filepath);
+	std::string BaseName(const std::string &filepath);
 	std::string LastElement(const std::string &filepath);
 }
 

@@ -24,7 +24,7 @@ namespace filepath
 		}
 	}
 
-	std::string FileExtName(const std::string &filepath)
+	std::string ExtName(const std::string &filepath)
 	{
 		size_t index = filepath.find_last_of(".");
 		if (filepath.find_last_of('.') == std::string::npos)
@@ -42,7 +42,7 @@ namespace filepath
 		return path.substr(index + 1, path.length() - index - 1);
 	}
 
-	std::string FileBaseName(const std::string &filepath)
+	std::string BaseName(const std::string &filepath)
 	{
 		std::string el = LastElement(filepath);
 		int i;

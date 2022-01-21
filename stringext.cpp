@@ -84,4 +84,16 @@ namespace stringext
 		result += *(stringVector.end() - 1);
 		return result;
 	}
+
+	void ToUpper(std::string &s)
+	{
+		for (std::string::iterator it = s.begin(); it < s.end(); it++)
+			*it = ::toupper(*it);
+	}
+
+	void ToLower(std::string &s)
+	{
+		for (std::string::iterator it = s.begin(); it < s.end(); it++)
+			*it = ::tolower(*it);
+	}
 }

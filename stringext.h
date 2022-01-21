@@ -18,6 +18,8 @@ namespace stringext
 	void TrimSpace(std::string &s);
 	std::string Join(const std::vector<std::string> &stringVector, const std::string &sep);
 	std::string Join(const std::vector<std::string> &stringVector, const char *sep);
+	void ToUpper(std::string &s);
+	void ToLower(std::string &s);
 }
 
 #endif
