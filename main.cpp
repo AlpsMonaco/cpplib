@@ -97,7 +97,7 @@ public:
 		std::string cmd, msg;
 		for (auto objFilePath : objFileList)
 		{
-			std::string objName = filepath::FileBaseName(objFilePath);
+			std::string objName = filepath::BaseName(objFilePath);
 			cmd = "lib /out:static/" + objName + ".lib " + objFilePath;
 			result = os::Execute(cmd);
 			msg = "lib " + objFilePath;
