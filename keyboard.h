@@ -1,11 +1,5 @@
-#pragma once
-#ifndef __UTIL_KEYBOARD_H
-#define __UTIL_KEYBOARD_H
-
-#ifdef _WIN32
-#include <Windows.h>
-#else
-#endif
+#ifndef __KEYBOARD_H
+#define __KEYBOARD_H
 
 #define VK_0 0x30
 #define VK_1 0x31
@@ -44,20 +38,57 @@
 #define VK_Y 0x59
 #define VK_Z 0x5A
 
+// scancode
+#define SCAN_CODE_ESC 0x01
+#define SCAN_CODE_TAB 0x0F
+#define SCAN_CODE_ENTER 0x1C
+#define SCAN_CODE_LCTRL 0x1D
+#define SCAN_CODE_LShift 0x2A
+
+#define SCAN_CODE_Q 0x10
+#define SCAN_CODE_W 0x11
+#define SCAN_CODE_E 0x12
+#define SCAN_CODE_R 0x13
+#define SCAN_CODE_T 0x14
+#define SCAN_CODE_Y 0x15
+#define SCAN_CODE_U 0x16
+#define SCAN_CODE_I 0x17
+#define SCAN_CODE_O 0x18
+#define SCAN_CODE_P 0x19
+
+#define SCAN_CODE_A 0x1E
+#define SCAN_CODE_S 0x1F
+#define SCAN_CODE_D 0x20
+#define SCAN_CODE_F 0x21
+#define SCAN_CODE_G 0x22
+#define SCAN_CODE_H 0x23
+#define SCAN_CODE_J 0x24
+#define SCAN_CODE_K 0x25
+#define SCAN_CODE_L 0x26
+
+#define SCAN_CODE_Z 0x2C
+#define SCAN_CODE_X 0x2D
+#define SCAN_CODE_C 0x2E
+#define SCAN_CODE_V 0x2F
+#define SCAN_CODE_B 0x30
+#define SCAN_CODE_N 0x31
+#define SCAN_CODE_M 0x32
+
+#include <Windows.h>
+#pragma comment(lib, "User32.Lib")
+
 namespace keyboard
 {
 	using KeyCode = DWORD;
 	using KeyStatus = WPARAM;
+	using KeyboardCallback = bool (*)(KeyCode &keyCode, KeyStatus &keystatus);
 
-	// If the callback returns false,the next hook will not be called,other applicatioins
-	// will not receive keyboard event.
-	using OnKeyPressCallback = bool (*)(KeyCode &keyCode, KeyStatus &keyStatus);
+	void SetKeyboardCallback(KeyboardCallback callback);
+	bool Hook();
+	void Unhook();
 
-	void OnKeyPress(OnKeyPressCallback);
-	void CancelOnKeyPress();
-
-	extern OnKeyPressCallback PressKeyDetect;
-
+	// Win keyboard requires GetMessage().
+	void MessageLoop();
 }
 
 #endif
