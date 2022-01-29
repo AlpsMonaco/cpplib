@@ -1,6 +1,8 @@
 #ifndef __KEYBOARD_H
 #define __KEYBOARD_H
 
+#ifdef _WIN32
+
 #define VK_0 0x30
 #define VK_1 0x31
 #define VK_2 0x32
@@ -91,4 +93,5 @@ namespace keyboard
 	void MessageLoop();
 }
 
+#endif
 #endif
