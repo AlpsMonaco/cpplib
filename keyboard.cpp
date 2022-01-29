@@ -27,7 +27,7 @@ void keyboard::Unhook()
 		UnhookWindowsHookEx(keyboardHook);
 }
 
-void MessageLoop()
+void keyboard::MessageLoop()
 {
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0))

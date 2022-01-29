@@ -89,7 +89,7 @@ namespace keyboard
 	bool Hook();
 	void Unhook();
 
-	// Win keyboard requires GetMessage().
+	// Win keyboard hook requires GetMessage().
 	void MessageLoop();
 }
 
