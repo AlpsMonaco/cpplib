@@ -1,43 +1,47 @@
-#pragma once
 #ifndef __NETWORK_H
 #define __NETWORK_H
 
+#ifdef _WIN32
+
+#include <winsock2.h>
+#pragma comment(lib, "WS2_32.Lib")
+
+#else
+
+#endif
+
 namespace network
 {
-	bool IsDomain(const char *ip);
-	void NetToHost(const void *net, char dst[16]);
-	bool DNSResolve(const char *name, char *dst);
-
+	using SocketFd = SOCKET;
 	class Socket
 	{
 	public:
 		Socket();
-		Socket(Socket &&s);
-		Socket(const Socket &s);
-		Socket(const int &af, const int &sock);
-		Socket(const char *addr, const int &port, const int &af, const int &sock);
-		Socket(int fd, const char *addr, const int &port, const int &af, const int &sock);
-		virtual ~Socket();
+		Socket(int afType, int sockType, const char *addr = "0.0.0.0", int port = 0);
 
-		Socket &operator=(const Socket &s);
-		Socket &operator=(Socket &&s);
+		Socket(Socket &&rhs);
+		Socket &operator=(Socket &&rhs);
 
-		int Send(const char *buf, const int &bufSize);
-		int Recv(char *buf, const int &bufSize);
-		int Close();
-		const char *GetAddr();
 		int GetPort();
+		void GetAddr(char *dst);
+		sockaddr_in *GetSockAddr();
+		void SetSocketFd(SocketFd fd);
+		void SetSockType(int sockType);
 
-		int errcode;
-		char *errmsg;
+		const sockaddr_in *GetSockAddr() const;
+
+		void Close();
+		int Errno();
+
+		bool Send(const char *buf, int size);
+		bool Recv(char *buf, int size);
 
 	protected:
-		void SocketError();
-		int af;
-		int sock;
-		char addr[16];
-		int port;
-		int fd;
+		sockaddr_in addr;
+		int sockType;
+		SocketFd fd;
+
+		bool CreateSocket();
 	};
 
 	namespace tcp
@@ -46,28 +50,21 @@ namespace network
 		{
 		public:
 			Client();
-			Client(const Client &c);
-			Client(Client &&c);
-			Client(const char *addr, const int &port);
-			~Client();
-
-			Client &operator=(const Client &c);
-			Client &operator=(Client &&c);
+			Client(const char *addr, int port);
 
 			bool Connect();
-			bool Connect(const char *addr, const int &port);
+			bool Connect(const char *addr, int port);
 		};
 
 		class Server : public Socket
 		{
 		public:
-			Server(const char *addr, const int &port);
-			~Server();
+			Server(const char *addr, int port);
 
 			bool Listen();
 			bool Accept(Socket &socket);
 		};
 	}
-
 }
+
 #endif

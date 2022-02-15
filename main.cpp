@@ -65,8 +65,7 @@ public:
 							if (v == *it)
 								return true;
 						}
-						return false;
-					}())
+						return false; }())
 					continue;
 				resultFileList.push_back(filePath + *it);
 			}
