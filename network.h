@@ -22,6 +22,8 @@ namespace network
 		Socket(Socket &&rhs);
 		Socket &operator=(Socket &&rhs);
 
+		Socket &operator=(Socket &rhs);
+
 		int GetPort();
 		void GetAddr(char *dst);
 		sockaddr_in *GetSockAddr();

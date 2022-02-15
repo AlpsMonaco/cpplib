@@ -25,11 +25,17 @@ void (*GlobalSocketInit)() = []() -> void
 void (*GlobalSocketInit)() = []() -> void {};
 #endif
 
-network::Socket &network::Socket::operator=(Socket &&rhs)
+network::Socket &network::Socket::operator=(Socket &rhs)
 {
 	this->addr = rhs.addr;
 	this->sockType = rhs.sockType;
 	this->fd = rhs.fd;
+	return *this;
+}
+
+network::Socket &network::Socket::operator=(Socket &&rhs)
+{
+	*this = static_cast<Socket &>(rhs);
 	rhs.addr.sin_port = 0;
 	rhs.addr.sin_family = 0;
 	rhs.addr.sin_zero[0] = 0;
