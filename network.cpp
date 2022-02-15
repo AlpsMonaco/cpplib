@@ -88,10 +88,11 @@ bool network::Socket::CreateSocket()
 	return this->fd != INVALID_SOCKET;
 }
 
-void network::Socket::Close()
+bool network::Socket::Close()
 {
-	closesocket(this->fd);
+	int status = closesocket(this->fd);
 	this->fd = 0;
+	return status != SOCKET_ERROR;
 }
 
 bool network::Socket::Send(const char *buf, int bufSize) { return send(this->fd, buf, bufSize, 0) != SOCKET_ERROR; }

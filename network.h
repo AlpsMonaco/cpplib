@@ -32,7 +32,7 @@ namespace network
 
 		const sockaddr_in *GetSockAddr() const;
 
-		void Close();
+		bool Close();
 		int Errno();
 
 		bool Send(const char *buf, int size);
