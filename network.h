@@ -20,6 +20,7 @@ namespace network
 		Socket(int afType, int sockType, const char *addr = "0.0.0.0", int port = 0);
 
 		Socket(Socket &&rhs);
+		Socket(Socket &rhs);
 		Socket &operator=(Socket &&rhs);
 
 		Socket &operator=(Socket &rhs);
@@ -35,8 +36,8 @@ namespace network
 		bool Close();
 		int Errno();
 
-		bool Send(const char *buf, int size);
-		bool Recv(char *buf, int size);
+		int Send(const char *buf, int size);
+		int Recv(char *buf, int size);
 
 	protected:
 		sockaddr_in addr;

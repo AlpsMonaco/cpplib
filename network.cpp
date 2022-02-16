@@ -44,6 +44,7 @@ network::Socket &network::Socket::operator=(Socket &&rhs)
 	return *this;
 }
 
+network::Socket::Socket(Socket &rhs) : addr(rhs.addr), sockType(rhs.sockType), fd(rhs.fd) { GlobalSocketInit(); }
 network::Socket::Socket(network::Socket &&rhs) : addr(rhs.addr), sockType(rhs.sockType), fd(rhs.fd)
 {
 	GlobalSocketInit();
@@ -95,8 +96,8 @@ bool network::Socket::Close()
 	return status != SOCKET_ERROR;
 }
 
-bool network::Socket::Send(const char *buf, int bufSize) { return send(this->fd, buf, bufSize, 0) != SOCKET_ERROR; }
-bool network::Socket::Recv(char *buf, int bufSize) { return recv(fd, buf, bufSize, 0) != SOCKET_ERROR; }
+int network::Socket::Send(const char *buf, int bufSize) { return send(this->fd, buf, bufSize, 0); }
+int network::Socket::Recv(char *buf, int bufSize) { return recv(fd, buf, bufSize, 0); }
 int network::Socket::Errno() { return WSAGetLastError(); }
 const sockaddr_in *network::Socket::GetSockAddr() const { return &this->addr; }
 sockaddr_in *network::Socket::GetSockAddr() { return &this->addr; }
