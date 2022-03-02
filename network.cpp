@@ -3,6 +3,7 @@
 constexpr int SOCKADDR_IN_SIZE = sizeof(sockaddr_in);
 
 #ifdef _WIN32
+
 struct WSAManager
 {
 	WSAManager()
@@ -19,10 +20,28 @@ WSAManager &WSAInit()
 	return wsamanager;
 }
 
-void (*GlobalSocketInit)() = []() -> void
+void (*SysSocketInit)() = []() -> void
 { WSAInit(); };
+inline int GetErrno() { return WSAGetLastError(); }
+using socklen_t = int;
+
 #else
-void (*GlobalSocketInit)() = []() -> void {};
+
+#include <errno.h>
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
+#define SOCKET_ERROR -1
+#define INVALID_SOCKET -1
+
+void (*SysSocketInit)() = []() -> void {};
+inline void itoa(int value, char *buf, int unuse) { sprintf(buf, "%d", value); }
+int (*closesocket)(int) = close;
+inline int GetErrno() { return errno; }
+
 #endif
 
 network::Socket &network::Socket::operator=(Socket &rhs)
@@ -44,10 +63,10 @@ network::Socket &network::Socket::operator=(Socket &&rhs)
 	return *this;
 }
 
-network::Socket::Socket(Socket &rhs) : addr(rhs.addr), sockType(rhs.sockType), fd(rhs.fd) { GlobalSocketInit(); }
+network::Socket::Socket(Socket &rhs) : addr(rhs.addr), sockType(rhs.sockType), fd(rhs.fd) { SysSocketInit(); }
 network::Socket::Socket(network::Socket &&rhs) : addr(rhs.addr), sockType(rhs.sockType), fd(rhs.fd)
 {
-	GlobalSocketInit();
+	SysSocketInit();
 	rhs.addr.sin_port = 0;
 	rhs.addr.sin_family = 0;
 	rhs.addr.sin_zero[0] = 0;
@@ -55,10 +74,10 @@ network::Socket::Socket(network::Socket &&rhs) : addr(rhs.addr), sockType(rhs.so
 	rhs.fd = 0;
 }
 
-network::Socket::Socket() : addr({0, 0, {0}}), sockType(0), fd(0) { GlobalSocketInit(); }
+network::Socket::Socket() : addr({0, 0, {0}}), sockType(0), fd(0) { SysSocketInit(); }
 network::Socket::Socket(int afType, int sockType, const char *addr, int port) : sockType(sockType), fd(0)
 {
-	GlobalSocketInit();
+	SysSocketInit();
 	this->addr.sin_family = afType;
 	this->addr.sin_port = htons(port);
 	this->addr.sin_addr.s_addr = inet_addr(addr);
@@ -98,7 +117,7 @@ bool network::Socket::Close()
 
 int network::Socket::Send(const char *buf, int bufSize) { return send(this->fd, buf, bufSize, 0); }
 int network::Socket::Recv(char *buf, int bufSize) { return recv(fd, buf, bufSize, 0); }
-int network::Socket::Errno() { return WSAGetLastError(); }
+int network::Socket::Errno() { return GetErrno(); }
 const sockaddr_in *network::Socket::GetSockAddr() const { return &this->addr; }
 sockaddr_in *network::Socket::GetSockAddr() { return &this->addr; }
 
@@ -139,7 +158,7 @@ void network::Socket::AcquireSocket(network::Socket &socket, SocketFd fd, int so
 
 bool network::tcp::Server::Accept(Socket &socket)
 {
-	int addrlen = SOCKADDR_IN_SIZE;
+	socklen_t addrlen = SOCKADDR_IN_SIZE;
 	int fd = accept(this->fd, (sockaddr *)socket.GetSockAddr(), &addrlen);
 	if (fd == INVALID_SOCKET)
 		return false;

@@ -8,6 +8,10 @@
 
 #else
 
+#include <netinet/in.h>
+
+using SOCKET = int;
+
 #endif
 
 namespace network
@@ -22,7 +26,6 @@ namespace network
 		Socket(Socket &&rhs);
 		Socket(Socket &rhs);
 		Socket &operator=(Socket &&rhs);
-
 		Socket &operator=(Socket &rhs);
 
 		int GetPort();
