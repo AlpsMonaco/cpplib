@@ -28,8 +28,6 @@ namespace network
 		int GetPort();
 		void GetAddr(char *dst);
 		sockaddr_in *GetSockAddr();
-		void SetSocketFd(SocketFd fd);
-		void SetSockType(int sockType);
 
 		const sockaddr_in *GetSockAddr() const;
 
@@ -45,6 +43,7 @@ namespace network
 		SocketFd fd;
 
 		bool CreateSocket();
+		static void AcquireSocket(Socket &socket, SocketFd fd, int sockType);
 	};
 
 	namespace tcp

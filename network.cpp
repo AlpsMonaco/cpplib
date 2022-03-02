@@ -112,9 +112,6 @@ bool network::tcp::Client::Connect()
 	return connect(this->fd, (sockaddr *)this->GetSockAddr(), SOCKADDR_IN_SIZE) != SOCKET_ERROR;
 }
 
-void network::Socket::SetSocketFd(SocketFd fd) { this->fd = fd; }
-void network::Socket::SetSockType(int sockType) { this->sockType = sockType; }
-
 bool network::tcp::Client::Connect(const char *addr, int port)
 {
 	this->addr.sin_port = htons(port);
@@ -134,13 +131,18 @@ bool network::tcp::Server::Listen()
 	return true;
 }
 
+void network::Socket::AcquireSocket(network::Socket &socket, SocketFd fd, int sockType)
+{
+	socket.fd = fd;
+	socket.sockType = sockType;
+}
+
 bool network::tcp::Server::Accept(Socket &socket)
 {
 	int addrlen = SOCKADDR_IN_SIZE;
 	int fd = accept(this->fd, (sockaddr *)socket.GetSockAddr(), &addrlen);
 	if (fd == INVALID_SOCKET)
 		return false;
-	socket.SetSockType(SOCK_STREAM);
-	socket.SetSocketFd(fd);
+	network::Socket::AcquireSocket(socket, fd, SOCK_STREAM);
 	return true;
 }
