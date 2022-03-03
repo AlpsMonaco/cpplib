@@ -19,14 +19,7 @@ namespace os
 	public:
 		int code;
 		std::string output;
-		friend std::ostream &operator<<(std::ostream &os, const ExecuteResult &result)
-		{
-			os << result.code;
-			if (result.output != "")
-				os << std::endl
-				   << result.output;
-			return os;
-		}
+		friend std::ostream &operator<<(std::ostream &os, const ExecuteResult &result);
 	};
 
 	bool MakeDir(const char *dirPath);
@@ -34,14 +27,14 @@ namespace os
 	ExecuteResult Execute(const std::string &cmd);
 	std::vector<std::string> ListDir(const char *path);
 	std::vector<std::string> ListDir(const std::string &path);
-	inline bool IsPathExist(const char *path) { return access(path, 0) == 0; }
-	inline bool IsDirExist(const char *dirPath) { return IsPathExist(dirPath); }
-	inline bool IsDirExist(const std::string &dirPath) { return IsPathExist(dirPath.c_str()); }
-	inline bool IsFileExist(const char *filePath) { return IsPathExist(filePath); }
-	inline bool IsFileExist(const std::string &filePath) { return IsPathExist(filePath.c_str()); }
-	inline bool MakeDir(const std::string &dirPath) { return MakeDir(dirPath.c_str()); }
-	inline bool DeleteFile(const std::string &filePath) { return DeleteFile(filePath.c_str()); }
-	inline bool DeleteFile(const char *filePath) { return remove(filePath) == 0; }
+	inline bool IsPathExist(const char *path);
+	inline bool IsDirExist(const char *dirPath);
+	inline bool IsDirExist(const std::string &dirPath);
+	inline bool IsFileExist(const char *filePath);
+	inline bool IsFileExist(const std::string &filePath);
+	inline bool MakeDir(const std::string &dirPath);
+	inline bool RemoveFile(const std::string &filePath);
+	inline bool RemoveFile(const char *filePath);
 }
 
 #ifdef _WIN32
@@ -59,7 +52,7 @@ namespace os
 namespace os
 {
 #ifdef _WIN32
-	std::vector<std::string> GetDirectoryList(const char *path)
+	std::vector<std::string> ListDir(const char *path)
 	{
 		std::string dirPath(path);
 		WIN32_FIND_DATAA findData;
@@ -91,7 +84,7 @@ namespace os
 		return dirList;
 	}
 #else
-	std::vector<std::string> GetDirectoryList(const char *path)
+	std::vector<std::string> ListDir(const char *path)
 	{
 		std::vector<std::string> list;
 		DIR *d;
@@ -112,6 +105,15 @@ namespace os
 		return list;
 	}
 #endif
+
+	std::ostream &operator<<(std::ostream &os, const ExecuteResult &result)
+	{
+		os << result.code;
+		if (result.output != "")
+			os << std::endl
+			   << result.output;
+		return os;
+	}
 
 	ExecuteResult Execute(const std::string &s)
 	{
@@ -158,8 +160,14 @@ namespace os
 	}
 
 	ExecuteResult Execute(const char *cmd) { return Execute(std::string(cmd)); }
-	std::vector<std::string> ListDir(const char *path) { return GetDirectoryList(path); }
-	std::vector<std::string> ListDir(const std::string &path) { return GetDirectoryList(path.c_str()); }
+	bool IsPathExist(const char *path) { return access(path, 0) == 0; }
+	bool IsDirExist(const char *dirPath) { return IsPathExist(dirPath); }
+	bool IsDirExist(const std::string &dirPath) { return IsPathExist(dirPath.c_str()); }
+	bool IsFileExist(const char *filePath) { return IsPathExist(filePath); }
+	bool IsFileExist(const std::string &filePath) { return IsPathExist(filePath.c_str()); }
+	bool MakeDir(const std::string &dirPath) { return MakeDir(dirPath.c_str()); }
+	bool RemoveFile(const std::string &filePath) { return RemoveFile(filePath.c_str()); }
+	bool RemoveFile(const char *filePath) { return remove(filePath) == 0; }
 }
 
 #endif
