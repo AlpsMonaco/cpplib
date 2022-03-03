@@ -93,5 +93,43 @@ namespace keyboard
 	void MessageLoop();
 }
 
+namespace keyboard
+{
+	HHOOK keyboardHook = NULL;
+	KeyboardCallback keyboardCallback = nullptr;
+
+	void SetKeyboardCallback(KeyboardCallback callback) { keyboardCallback = callback; }
+
+	LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
+	{
+		KBDLLHOOKSTRUCT *ks = (KBDLLHOOKSTRUCT *)lParam;
+		if (keyboardCallback(ks->vkCode, wParam))
+			return CallNextHookEx(NULL, nCode, wParam, lParam);
+		return 1;
+	}
+
+	bool Hook()
+	{
+		keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, NULL, 0);
+		return keyboardHook != NULL;
+	}
+
+	void Unhook()
+	{
+		if (keyboardHook != NULL)
+			UnhookWindowsHookEx(keyboardHook);
+	}
+
+	void MessageLoop()
+	{
+		MSG msg;
+		while (GetMessage(&msg, NULL, 0, 0))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+}
+
 #endif
 #endif

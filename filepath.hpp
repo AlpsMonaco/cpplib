@@ -1,4 +1,17 @@
-#include "filepath.h"
+#pragma once
+
+#ifndef __FILEPATH_HPP
+#define __FILEPATH_HPP
+#include <string>
+
+namespace filepath
+{
+	void ToSlash(std::string &filepath);
+	void ToBackslash(std::string &filepath);
+	std::string ExtName(const std::string &filepath);
+	std::string BaseName(const std::string &filepath);
+	std::string LastElement(const std::string &filepath);
+}
 
 namespace filepath
 {
@@ -56,3 +69,5 @@ namespace filepath
 		return el.substr(0, i);
 	}
 }
+
+#endif
