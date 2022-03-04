@@ -1,6 +1,6 @@
 #pragma once
-#ifndef __DB_UTIL_HPP
-#define __DB_UTIL_HPP
+#ifndef __DB_UTIL_HPP__
+#define __DB_UTIL_HPP__
 
 #include <mysql.h>
 #include <string>

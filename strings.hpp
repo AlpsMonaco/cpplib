@@ -54,8 +54,6 @@ namespace strings
 
 	std::vector<std::string> Split(const std::string &s, const char *sep) { return Split(s, std::string(sep)); }
 
-	template <typename T>
-	std::string ReadFileAll(T &fs) { return std::string(std::istreambuf_iterator<char>(fs), std::istreambuf_iterator<char>()); }
 	void TrimSpaceLeft(std::string &s)
 	{
 		const std::string SpaceCharacters = " \t\r\n";

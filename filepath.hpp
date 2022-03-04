@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef __FILEPATH_HPP
-#define __FILEPATH_HPP
+#ifndef __FILEPATH_HPP__
+#define __FILEPATH_HPP__
 #include <string>
 
 namespace filepath
