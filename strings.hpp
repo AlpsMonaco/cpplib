@@ -7,17 +7,26 @@
 
 namespace strings
 {
-	void ReplaceAll(std::string &s, const std::string &from, const std::string &to);
-	void ReplaceAll(std::string &s, const char *from, const char *to);
-	std::vector<std::string> Split(const std::string &s, const std::string &sep);
-	std::vector<std::string> Split(const std::string &s, const char *sep);
 	template <typename T>
 	std::string ReadFileAll(T &fs) { return std::string(std::istreambuf_iterator<char>(fs), std::istreambuf_iterator<char>()); }
+
+	template <typename T>
+	std::string Join(const std::vector<std::string> &stringVector, const T &t)
+	{
+		if (stringVector.size() == 0)
+			return "";
+		std::string result;
+		for (std::vector<std::string>::const_iterator it = stringVector.begin(); it < stringVector.end() - 1; it++)
+			result += *it + t;
+		result += *(stringVector.end() - 1);
+		return result;
+	}
+
+	void ReplaceAll(std::string &s, const std::string &from, const std::string &to);
+	std::vector<std::string> Split(const std::string &s, const std::string &sep);
 	void TrimSpaceLeft(std::string &s);
 	void TrimSpaceRight(std::string &s);
 	void TrimSpace(std::string &s);
-	std::string Join(const std::vector<std::string> &stringVector, const std::string &sep);
-	std::string Join(const std::vector<std::string> &stringVector, const char *sep);
 	void ToUpper(std::string &s);
 	void ToLower(std::string &s);
 }
@@ -34,14 +43,11 @@ namespace strings
 		}
 	}
 
-	void ReplaceAll(std::string &s, const char *from, const char *to) { ReplaceAll(s, std::string(from), std::string(to)); }
-
 	std::vector<std::string> Split(const std::string &s, const std::string &sep)
 	{
 		size_t begin = 0;
 		size_t end = 0;
 		std::vector<std::string> v;
-
 		while ((end = s.find(sep, begin)) != std::string::npos)
 		{
 			v.push_back(s.substr(begin, end - begin));
@@ -52,15 +58,13 @@ namespace strings
 		return v;
 	}
 
-	std::vector<std::string> Split(const std::string &s, const char *sep) { return Split(s, std::string(sep)); }
-
 	void TrimSpaceLeft(std::string &s)
 	{
-		const std::string SpaceCharacters = " \t\r\n";
+		const std::string space = " \t\r\n";
 		size_t size = 0;
 		for (auto it = s.begin(); it < s.end(); it++)
 		{
-			if (SpaceCharacters.find(*it) != std::string::npos)
+			if (space.find(*it) != std::string::npos)
 				size++;
 			else
 				break;
@@ -70,11 +74,11 @@ namespace strings
 
 	void TrimSpaceRight(std::string &s)
 	{
-		const std::string SpaceCharacters = " \t\r\n";
+		const std::string space = " \t\r\n";
 		size_t size = 0;
 		for (auto it = s.rbegin(); it < s.rend(); it++)
 		{
-			if (SpaceCharacters.find(*it) != std::string::npos)
+			if (space.find(*it) != std::string::npos)
 				size++;
 			else
 				break;
@@ -86,28 +90,6 @@ namespace strings
 	{
 		TrimSpaceLeft(s);
 		TrimSpaceRight(s);
-	}
-
-	std::string Join(const std::vector<std::string> &stringVector, const std::string &sep)
-	{
-		if (stringVector.size() == 0)
-			return "";
-		std::string result;
-		for (std::vector<std::string>::const_iterator it = stringVector.begin(); it < stringVector.end() - 1; it++)
-			result += *it + sep;
-		result += *(stringVector.end() - 1);
-		return result;
-	}
-
-	std::string Join(const std::vector<std::string> &stringVector, const char *sep)
-	{
-		if (stringVector.size() == 0)
-			return "";
-		std::string result;
-		for (std::vector<std::string>::const_iterator it = stringVector.begin(); it < stringVector.end() - 1; it++)
-			result += *it + sep;
-		result += *(stringVector.end() - 1);
-		return result;
 	}
 
 	void ToUpper(std::string &s)
