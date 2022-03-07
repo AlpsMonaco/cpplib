@@ -5,6 +5,7 @@
 #include <mysql.h>
 #include <string>
 #include <vector>
+#include <utility>
 
 #ifdef _WIN32
 #pragma comment(lib, "libmysql.lib")
@@ -12,93 +13,110 @@
 
 namespace db
 {
-	using MySQLRow = std::vector<std::string>;
-	using ResultVector = std::vector<MySQLRow>;
-	struct MySQLResult
+	struct Result
 	{
-		int errCode;
-		std::string errMsg;
-		ResultVector vector;
+		Result() : code(0), msg() {}
+		Result(int code, std::string &msg) : code(code), msg(msg) {}
+		Result(int code, std::string &&msg) : code(code), msg(std::forward<std::string>(msg)) {}
+		int code;
+		std::string msg;
 	};
-	struct MySQLExecRes
-	{
-		int errCode;
-		std::string errMsg;
-		my_ulonglong affectedRows;
-	};
+
+	using Row = std::vector<std::string>;
+	using Rows = std::vector<Row>;
 
 	class MySQL
 	{
 	public:
-		MySQL();
+		inline MySQL();
 		~MySQL();
 
-		inline bool Connect(const char *host, const int &port, const char *user, const char *password, const char *database) { return mysql_real_connect(this->mysql, host, user, password, database, port, nullptr, 0) != NULL; }
-		inline const char *Error() { return mysql_error(this->mysql); }
-		inline unsigned int Errno() { return mysql_errno(this->mysql); }
-		MySQLResult Query(const char *command);
-		MySQLExecRes Execute(const char *command);
+		inline bool Connect(const char *host, const int &port, const char *user, const char *password, const char *database);
+		inline const char *Error();
+		inline unsigned int Errno();
+		inline Result Execute(const char *command);
+		inline unsigned int GetAffectedRows();
+
+		Rows GetRows();
+		Row GetColumns();
+		inline void Close();
+
+	protected:
+		inline void Free();
 
 	private:
 		MYSQL *mysql;
+		MYSQL_RES *mysqlres;
 	};
 }
 
 namespace db
 {
-	MySQL::MySQL()
-	{
-		this->mysql = mysql_init(NULL);
-	}
+	bool MySQL::Connect(const char *host, const int &port, const char *user, const char *password, const char *database) { return mysql_real_connect(this->mysql, host, user, password, database, port, nullptr, 0) != NULL; }
+	const char *MySQL::Error() { return mysql_error(this->mysql); }
+	unsigned int MySQL::Errno() { return mysql_errno(this->mysql); }
 
-	MySQL::~MySQL()
-	{
-		mysql_close(this->mysql);
-		this->mysql = nullptr;
-		mysql_thread_end();
-	}
+	MySQL::MySQL() : mysql(nullptr), mysqlres(nullptr) { this->mysql = mysql_init(NULL); }
+	MySQL::~MySQL() { this->Free(); }
+	void MySQL::Close() { this->Free(); }
 
-	MySQLResult MySQL::Query(const char *command)
+	void MySQL::Free()
 	{
-		MySQLResult result{0};
-		if (mysql_query(this->mysql, command))
+		if (this->mysqlres != nullptr)
 		{
-			result.errCode = this->Errno();
-			result.errMsg = std::string(this->Error());
-			return result;
+			mysql_free_result(this->mysqlres);
+			this->mysqlres = nullptr;
 		}
-		MYSQL_RES *res = mysql_store_result(this->mysql);
-		unsigned int numFields = mysql_num_fields(res);
-		result.vector.reserve(mysql_num_rows(res));
 
-		MYSQL_ROW row;
-		while ((row = mysql_fetch_row(res)) != NULL)
+		if (this->mysql != nullptr)
 		{
-			MySQLRow r;
-			for (unsigned int i = 0; i < numFields; i++)
+			mysql_close(this->mysql);
+			this->mysql = nullptr;
+			mysql_thread_end();
+		}
+	}
+
+	Row MySQL::GetColumns()
+	{
+		Row row;
+		if (this->mysqlres != nullptr)
+		{
+			MYSQL_FIELD *pfield;
+			while ((pfield = mysql_fetch_field(this->mysqlres)) != nullptr)
+				row.emplace_back(pfield->name);
+		}
+		return row;
+	}
+
+	Result MySQL::Execute(const char *command)
+	{
+		if (mysql_query(this->mysql, command))
+			return Result(this->Errno(), std::string(this->Error()));
+		if (this->mysqlres != nullptr)
+			mysql_free_result(this->mysqlres);
+		this->mysqlres = mysql_store_result(this->mysql);
+		return Result();
+	}
+
+	Rows MySQL::GetRows()
+	{
+		Rows rows;
+		if (this->mysqlres != nullptr)
+		{
+			unsigned int numFields = mysql_num_fields(this->mysqlres);
+			MYSQL_ROW mysqlRow;
+			while ((mysqlRow = mysql_fetch_row(this->mysqlres)) != NULL)
 			{
-				r.push_back(std::string(row[i]));
+				Row row;
+				for (unsigned int i = 0; i < numFields; i++)
+					row.emplace_back(std::string(mysqlRow[i]));
+				rows.emplace_back(std::move(row));
 			}
-			result.vector.push_back(std::move(r));
 		}
-		mysql_free_result(res);
-		return result;
+		return rows;
 	}
 
-	MySQLExecRes MySQL::Execute(const char *command)
-	{
-		MySQLExecRes result;
-		result.errCode = 0;
-		result.affectedRows = 0;
-		if (mysql_query(this->mysql, command))
-		{
-			result.errCode = this->Errno();
-			result.errMsg = std::string(this->Error());
-			return result;
-		}
-		result.affectedRows = mysql_affected_rows(this->mysql);
-		return result;
-	}
+	unsigned int MySQL::GetAffectedRows() { return mysql_affected_rows(mysql); }
 }
 
 #endif
