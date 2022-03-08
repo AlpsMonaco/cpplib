@@ -1,18 +1,46 @@
-#include <stdio.h>
-#include <time.h>
+#ifndef __PRINT_MULTI_ARGS__
+#define __PRINT_MULTI_ARGS__
+#include <iostream>
 
-int main()
+template <typename T>
+inline void Print(T t) { std::cout << t; }
+
+template <typename T, typename... Args>
+void Print(T t, Args... args)
 {
-	time_t rawtime;
-	struct tm info;
-	char buffer[80];
+	std::cout << t << " ";
+	Print(args...);
+}
 
-	time(&rawtime);
+template <typename... Args>
+void Println(Args... args)
+{
+	Print(args...);
+	std::cout << std::endl;
+}
 
-	int e = localtime_s(&info, &rawtime);
+#endif
 
-	strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", &info);
-	printf("格式化的日期 & 时间 : |%s|\n", buffer);
+#include "network.hpp"
+#include <thread>
 
-	return (0);
+int main(int argc, char **argv)
+{
+	// const network::Socket s;
+	network::tcp::Server server("127.0.0.1", 65001);
+	if (!server.Listen())
+	{
+		Println(server.Errno());
+		return 1;
+	}
+	// server.SetOnNewData([](const network::Socket &socket, char *data, int recvsize) -> bool
+	// 					{
+	// 	data[recvsize] = 0;
+	// 	Println(data);
+	// 	 return false; });
+	// std::thread t([&server]() -> void
+	// 			  { std::this_thread::sleep_for(std::chrono::seconds(10));server.Close(); });
+	// t.detach();
+	server.Begin();
+	Println(server.Errno());
 }

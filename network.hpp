@@ -9,6 +9,17 @@
 #else
 
 #include <netinet/in.h>
+#include <errno.h>
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <sys/ioctl.h>
+#include <arpa/inet.h>
+
+#define SOCKET_ERROR -1
+#define INVALID_SOCKET -1
 using SOCKET = int;
 
 #endif
@@ -100,7 +111,7 @@ namespace network
 			void RemoveSocket(SocketFd cfd);
 
 			SocketMap socketmap;
-			FD_SET socketset;
+			fd_set socketset;
 			char *buffer;
 			int buffersize;
 		};
@@ -135,16 +146,10 @@ namespace network
 	using socklen_t = int;
 
 #else
-
-#include <errno.h>
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-
-#define SOCKET_ERROR -1
-#define INVALID_SOCKET -1
+	inline int ioctlsocket(SocketFd fd, unsigned long int arg, u_long *val)
+	{
+		return ioctl(fd, arg, val);
+	}
 
 	void (*Init)() = []() -> void {};
 	inline void itoa(int value, char *buf, int unuse) { sprintf(buf, "%d", value); }
@@ -282,6 +287,7 @@ namespace network
 		return true;
 	}
 
+#ifdef _WIN32
 	void tcp::Server::Begin()
 	{
 		if (this->OnNewConnection == nullptr)
@@ -349,6 +355,99 @@ namespace network
 			}
 		}
 	}
+#else
+	void tcp::Server::Begin()
+	{
+		if (this->OnNewConnection == nullptr)
+			this->OnNewConnection = DefaultOnNewConnection;
+		if (this->OnNewData == nullptr)
+			this->OnNewData = DefaultOnNewData;
+		if (this->OnConnectionClose == nullptr)
+			this->OnConnectionClose = DefaultOnConnectionClose;
+		if (this->OnError == nullptr)
+			this->OnError = DefaultOnError;
+
+		FD_SET(this->fd, &this->socketset);
+		fd_set readableset;
+		int count, recvsize;
+		int maxfd = this->fd;
+		unsigned int i;
+		sockaddr_in clientaddr;
+		socklen_t addrlen = sizeof(clientaddr);
+		SocketFd cfd;
+		int clientfdlist[1024];
+		for (i = 0; i < 1024; i++)
+			clientfdlist[i] = 0;
+		for (;;)
+		{
+			readableset = this->socketset;
+			count = select(maxfd + 1, &readableset, NULL, NULL, NULL);
+			if (count == SOCKET_ERROR)
+			{
+				this->OnError("socket error on I/O select");
+				return;
+			}
+			if (FD_ISSET(this->fd, &readableset))
+			{
+				count--;
+				cfd = accept(this->fd, (sockaddr *)&clientaddr, &addrlen);
+				if (cfd == SOCKET_ERROR)
+				{
+					this->OnError("accept socket failed");
+					return;
+				}
+				if (cfd > maxfd)
+					maxfd = cfd;
+				this->AddSocket(cfd, clientaddr);
+				Socket &rsocket = this->GetSocket(cfd);
+				if (!this->OnNewConnection(rsocket))
+				{
+					rsocket.Close();
+					this->RemoveSocket(cfd);
+				}
+				else
+				{
+					for (i = 0; i < 1024; i++)
+					{
+						if (clientfdlist[i] == 0)
+						{
+							clientfdlist[i] = cfd;
+							break;
+						}
+					}
+				}
+			}
+			for (i = 0; i < 1024; i++)
+			{
+				cfd = clientfdlist[i];
+				if (FD_ISSET(cfd, &readableset))
+				{
+					count--;
+					Socket &rsocket = GetSocket(cfd);
+					recvsize = rsocket.Recv(this->buffer, this->buffersize);
+					if (recvsize > 0)
+					{
+						if (!this->OnNewData(rsocket, this->buffer, recvsize))
+						{
+							rsocket.Close();
+							this->RemoveSocket(cfd);
+							clientfdlist[i] = 0;
+						}
+					}
+					else
+					{
+						this->OnConnectionClose(rsocket);
+						this->RemoveSocket(cfd);
+						clientfdlist[i] = 0;
+					}
+				}
+				if (count == 0)
+					break;
+			}
+		}
+	}
+
+#endif
 
 	void tcp::Server::AddSocket(SocketFd cfd, const sockaddr_in &sockaddr)
 	{
