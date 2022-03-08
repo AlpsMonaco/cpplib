@@ -109,7 +109,7 @@ namespace db
 			{
 				Row row;
 				for (unsigned int i = 0; i < numFields; i++)
-					row.emplace_back(std::string(mysqlRow[i]));
+					row.emplace_back(std::string(mysqlRow[i] ? mysqlRow[i] : ""));
 				rows.emplace_back(std::move(row));
 			}
 		}
