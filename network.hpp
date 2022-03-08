@@ -299,7 +299,6 @@ namespace network
 		unsigned int i;
 		sockaddr_in clientAddr;
 		SocketFd cfd;
-		Socket &rsocket = Socket();
 		int addrlen = sizeof(clientAddr);
 		for (;;)
 		{
@@ -321,7 +320,7 @@ namespace network
 						return;
 					}
 					this->AddSocket(cfd, clientAddr);
-					rsocket = this->GetSocket(cfd);
+					Socket &rsocket = this->GetSocket(cfd);
 					if (!this->OnNewConnection(rsocket))
 					{
 						rsocket.Close();
@@ -331,7 +330,7 @@ namespace network
 				else
 				{
 					cfd = readableset.fd_array[i];
-					rsocket = GetSocket(cfd);
+					Socket &rsocket = GetSocket(cfd);
 					recvsize = rsocket.Recv(this->buffer, this->buffersize);
 					if (recvsize > 0)
 					{
