@@ -2,7 +2,7 @@
 #ifndef __DB_UTIL_HPP__
 #define __DB_UTIL_HPP__
 
-#include <mysql.h>
+#include "thirdparty/include/mysql/mysql.h"
 #include <string>
 #include <vector>
 #include <utility>
