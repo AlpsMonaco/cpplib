@@ -23,8 +23,8 @@ namespace network
 	{
 	public:
 		Socket();
-		Socket(int afType, int sockType, const char *addr = "0.0.0.0", int port = 0, int fd = 0);
-		Socket(int sockType, const sockaddr_in *pAddr, int fd = 0);
+		Socket(int aftype, int socktype, const char *addr = "0.0.0.0", int port = 0, int fd = 0);
+		Socket(int socktype, const sockaddr_in *paddr, int fd = 0);
 		Socket(const Socket &rhs);
 		Socket(Socket &&rhs);
 
@@ -47,7 +47,7 @@ namespace network
 
 	protected:
 		sockaddr_in addr;
-		int sockType;
+		int socktype;
 		SocketFd fd;
 
 		bool CreateSocket();
@@ -76,7 +76,7 @@ namespace network
 			void SetOnNewConnection(bool (*onNewConnection)(const Socket &socket));
 			void SetOnNewData(bool (*onNewData)(const Socket &socket, char *data, int recvsize));
 			void SetOnConnectionClose(void (*onConnectionClose)(const Socket &socket));
-			void SetOnError(void (*onError)(const char *message));
+			void SetOnError(void (*onerror)(const char *message));
 			bool Listen();
 			void Begin();
 
@@ -156,7 +156,7 @@ namespace network
 	Socket &Socket::operator=(const Socket &rhs)
 	{
 		this->addr = rhs.addr;
-		this->sockType = rhs.sockType;
+		this->socktype = rhs.socktype;
 		this->fd = rhs.fd;
 		return *this;
 	}
@@ -172,8 +172,8 @@ namespace network
 		return *this;
 	}
 
-	Socket::Socket(const Socket &rhs) : addr(rhs.addr), sockType(rhs.sockType), fd(rhs.fd) {}
-	Socket::Socket(Socket &&rhs) : addr(rhs.addr), sockType(rhs.sockType), fd(rhs.fd)
+	Socket::Socket(const Socket &rhs) : addr(rhs.addr), socktype(rhs.socktype), fd(rhs.fd) {}
+	Socket::Socket(Socket &&rhs) : addr(rhs.addr), socktype(rhs.socktype), fd(rhs.fd)
 	{
 		rhs.addr.sin_port = 0;
 		rhs.addr.sin_family = 0;
@@ -182,9 +182,9 @@ namespace network
 		rhs.fd = 0;
 	}
 
-	Socket::Socket() : addr{0, 0, 0, {0}}, sockType(0), fd(0) { Init(); }
-	Socket::Socket(int sockType, const sockaddr_in *pAddr, int fd) : sockType(sockType), fd(fd), addr(*pAddr) { Init(); }
-	Socket::Socket(int afType, int sockType, const char *addr, int port, int fd) : sockType(sockType),
+	Socket::Socket() : addr{0, 0, 0, {0}}, socktype(0), fd(0) { Init(); }
+	Socket::Socket(int sockType, const sockaddr_in *paddr, int fd) : socktype(sockType), fd(fd), addr(*paddr) { Init(); }
+	Socket::Socket(int afType, int socktype, const char *addr, int port, int fd) : socktype(socktype),
 																				   fd(fd), addr{0, 0, 0, {0}}
 	{
 		this->addr.sin_family = afType;
@@ -214,7 +214,7 @@ namespace network
 
 	bool Socket::CreateSocket()
 	{
-		this->fd = socket(this->addr.sin_family, this->sockType, 0);
+		this->fd = socket(this->addr.sin_family, this->socktype, 0);
 		return this->fd != INVALID_SOCKET;
 	}
 
@@ -225,8 +225,8 @@ namespace network
 		return status != SOCKET_ERROR;
 	}
 
-	int Socket::Send(const char *buf, int bufSize) const { return send(this->fd, buf, bufSize, 0); }
-	int Socket::Recv(char *buf, int bufSize) const { return recv(fd, buf, bufSize, 0); }
+	int Socket::Send(const char *buf, int bufsize) const { return send(this->fd, buf, bufsize, 0); }
+	int Socket::Recv(char *buf, int bufsize) const { return recv(fd, buf, bufsize, 0); }
 	int Socket::Errno() { return GetErrno(); }
 	const sockaddr_in *Socket::GetSockAddr() const { return const_cast<const sockaddr_in *>(&this->addr); }
 
@@ -297,9 +297,9 @@ namespace network
 		fd_set readableset;
 		int status, recvsize;
 		unsigned int i;
-		sockaddr_in clientAddr;
+		sockaddr_in clientaddr;
 		SocketFd cfd;
-		int addrlen = sizeof(clientAddr);
+		int addrlen = sizeof(clientaddr);
 		for (;;)
 		{
 			readableset = this->socketset;
@@ -313,13 +313,13 @@ namespace network
 			{
 				if (readableset.fd_array[i] == this->fd)
 				{
-					cfd = accept(this->fd, (sockaddr *)&clientAddr, &addrlen);
+					cfd = accept(this->fd, (sockaddr *)&clientaddr, &addrlen);
 					if (cfd == SOCKET_ERROR)
 					{
 						this->OnError("accept socket failed");
 						return;
 					}
-					this->AddSocket(cfd, clientAddr);
+					this->AddSocket(cfd, clientaddr);
 					Socket &rsocket = this->GetSocket(cfd);
 					if (!this->OnNewConnection(rsocket))
 					{
@@ -343,7 +343,7 @@ namespace network
 					else
 					{
 						this->OnConnectionClose(rsocket);
-						this->RemoveSocket(readableset.fd_array[i]);
+						this->RemoveSocket(cfd);
 					}
 				}
 			}
