@@ -1,5 +1,5 @@
-#ifndef __KEYBOARD_H
-#define __KEYBOARD_H
+#ifndef __KEYBOARD_H__
+#define __KEYBOARD_H__
 
 #ifdef _WIN32
 

@@ -1,6 +1,6 @@
 #pragma once
-#ifndef __OS_H
-#define __OS_H
+#ifndef __OS_H__
+#define __OS_H__
 #include <string>
 #include <vector>
 #include <iostream>
@@ -26,10 +26,10 @@ namespace os
 	ExecuteResult Execute(const std::string &cmd);
 	std::vector<std::string> ListDir(const std::string &path);
 	inline bool IsPathExist(const std::string &path);
-	inline bool IsDirExist(const std::string &dirPath);
-	inline bool IsFileExist(const std::string &filePath);
-	inline bool MakeDir(const std::string &dirPath);
-	inline bool RemoveFile(const std::string &filePath);
+	inline bool IsDirExist(const std::string &dirpath);
+	inline bool IsFileExist(const std::string &filepath);
+	inline bool MakeDir(const std::string &dirpath);
+	inline bool RemoveFile(const std::string &filepath);
 }
 
 #ifdef _WIN32
@@ -49,30 +49,30 @@ namespace os
 #ifdef _WIN32
 	std::vector<std::string> ListDir(const std::string &path)
 	{
-		std::string dirPath(path);
-		WIN32_FIND_DATAA findData;
+		std::string dirpath(path);
+		WIN32_FIND_DATAA finddata;
 		HANDLE hFind = INVALID_HANDLE_VALUE;
-		switch (dirPath[dirPath.size() - 1])
+		switch (dirpath[dirpath.size() - 1])
 		{
 		case '\\':
-			dirPath += "*";
+			dirpath += "*";
 			break;
 		case '/':
-			dirPath += "*";
+			dirpath += "*";
 			break;
 		default:
-			dirPath += "\\*";
+			dirpath += "\\*";
 			break;
 		}
 		std::vector<std::string> dirList;
-		hFind = FindFirstFileA(dirPath.c_str(), &findData);
+		hFind = FindFirstFileA(dirpath.c_str(), &finddata);
 		if (hFind == INVALID_HANDLE_VALUE)
 			return dirList;
-		while (FindNextFileA(hFind, &findData) != 0)
+		while (FindNextFileA(hFind, &finddata) != 0)
 		{
-			if (strcmp("..", findData.cFileName) == 0)
+			if (strcmp("..", finddata.cFileName) == 0)
 				continue;
-			dirList.push_back(std::string(findData.cFileName));
+			dirList.push_back(std::string(finddata.cFileName));
 		}
 
 		FindClose(hFind);
@@ -128,15 +128,15 @@ namespace os
 		return ExecuteResult(pclose(file), std::move(cmd));
 	}
 
-	bool MakeDir(const std::string &dirPath)
+	bool MakeDir(const std::string &dirpath)
 	{
-		const char *cdirPath = dirPath.c_str();
-		char *buffer = (char *)malloc(strlen(cdirPath) + 1);
-		strcpy(buffer, cdirPath);
+		const char *cdirpath = dirpath.c_str();
+		char *buffer = (char *)malloc(strlen(cdirpath) + 1);
+		strcpy(buffer, cdirpath);
 		int index = 0;
-		while (*cdirPath++ != '\0')
+		while (*cdirpath++ != '\0')
 		{
-			if (*cdirPath == '/' || *cdirPath == '\\')
+			if (*cdirpath == '/' || *cdirpath == '\\')
 			{
 				buffer[index + 1] = '\0';
 				if (!IsDirExist(buffer))
@@ -154,9 +154,9 @@ namespace os
 	}
 
 	bool IsPathExist(const std::string &path) { return access(path.c_str(), 0) == 0; }
-	bool IsDirExist(const std::string &dirPath) { return IsPathExist(dirPath); }
-	bool IsFileExist(const std::string &filePath) { return IsPathExist(filePath); }
-	bool RemoveFile(const std::string &filePath) { return remove(filePath.c_str()) == 0; }
+	bool IsDirExist(const std::string &dirpath) { return IsPathExist(dirpath); }
+	bool IsFileExist(const std::string &filepath) { return IsPathExist(filepath); }
+	bool RemoveFile(const std::string &filepath) { return remove(filepath.c_str()) == 0; }
 }
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef __NETWORK_H
-#define __NETWORK_H
+#ifndef __NETWORK_H__
+#define __NETWORK_H__
 
 #ifdef _WIN32
 
@@ -94,17 +94,19 @@ namespace network
 		protected:
 			using SocketMap = std::map<SocketFd, Socket>;
 
-			// return false if you want to close this connection.
-			bool (*OnNewConnection)(const Socket &socket);
-			// return false if you want to close this connection.
-			bool (*OnNewData)(const Socket &socket, char *data, int recvsize);
-			void (*OnConnectionClose)(const Socket &socket);
-			void (*OnError)(const char *);
+			// return false if you want this connection to be closed after this callback;
+			bool (*onnewconnection)(const Socket &socket);
+			// return false if you want this connection to be closed after this callback;
+			bool (*onnewdata)(const Socket &socket, char *data, int recvsize);
+			void (*onconnectionclose)(const Socket &socket);
+			void (*onerror)(const char *);
 
 			static bool DefaultOnNewConnection(const Socket &socket);
 			static bool DefaultOnNewData(const Socket &socket, char *data, int recvsize);
 			static void DefaultOnConnectionClose(const Socket &socket);
 			static void DefaultOnError(const char *msg);
+
+			void ParseCallback();
 
 			Socket &GetSocket(SocketFd cfd);
 			void AddSocket(SocketFd cfd, const sockaddr_in &sockaddr);
@@ -253,10 +255,10 @@ namespace network
 	}
 
 	tcp::Server::Server(const char *addr, int port, int buffersize) : Socket(AF_INET, SOCK_STREAM, addr, port),
-																	  OnNewConnection(nullptr),
-																	  OnConnectionClose(nullptr),
-																	  OnNewData(nullptr),
-																	  OnError(nullptr),
+																	  onnewconnection(nullptr),
+																	  onconnectionclose(nullptr),
+																	  onnewdata(nullptr),
+																	  onerror(nullptr),
 																	  socketmap(),
 																	  socketset(),
 																	  buffer(nullptr),
@@ -290,15 +292,7 @@ namespace network
 #ifdef _WIN32
 	void tcp::Server::Begin()
 	{
-		if (this->OnNewConnection == nullptr)
-			this->OnNewConnection = DefaultOnNewConnection;
-		if (this->OnNewData == nullptr)
-			this->OnNewData = DefaultOnNewData;
-		if (this->OnConnectionClose == nullptr)
-			this->OnConnectionClose = DefaultOnConnectionClose;
-		if (this->OnError == nullptr)
-			this->OnError = DefaultOnError;
-
+		this->ParseCallback();
 		FD_SET(this->fd, &this->socketset);
 		fd_set readableset;
 		int status, recvsize;
@@ -312,7 +306,7 @@ namespace network
 			status = select(NULL, &readableset, NULL, NULL, NULL);
 			if (status == SOCKET_ERROR)
 			{
-				this->OnError("socket error on I/O select");
+				this->onerror("socket error on I/O select");
 				return;
 			}
 			for (i = 0; i < readableset.fd_count; i++)
@@ -322,12 +316,12 @@ namespace network
 					cfd = accept(this->fd, (sockaddr *)&clientaddr, &addrlen);
 					if (cfd == SOCKET_ERROR)
 					{
-						this->OnError("accept socket failed");
+						this->onerror("accept socket failed");
 						return;
 					}
 					this->AddSocket(cfd, clientaddr);
 					Socket &rsocket = this->GetSocket(cfd);
-					if (!this->OnNewConnection(rsocket))
+					if (!this->onnewconnection(rsocket))
 					{
 						rsocket.Close();
 						this->RemoveSocket(cfd);
@@ -340,7 +334,7 @@ namespace network
 					recvsize = rsocket.Recv(this->buffer, this->buffersize);
 					if (recvsize > 0)
 					{
-						if (!this->OnNewData(rsocket, this->buffer, recvsize))
+						if (!this->onnewdata(rsocket, this->buffer, recvsize))
 						{
 							rsocket.Close();
 							this->RemoveSocket(cfd);
@@ -348,7 +342,7 @@ namespace network
 					}
 					else
 					{
-						this->OnConnectionClose(rsocket);
+						this->onconnectionclose(rsocket);
 						this->RemoveSocket(cfd);
 					}
 				}
@@ -358,15 +352,7 @@ namespace network
 #else
 	void tcp::Server::Begin()
 	{
-		if (this->OnNewConnection == nullptr)
-			this->OnNewConnection = DefaultOnNewConnection;
-		if (this->OnNewData == nullptr)
-			this->OnNewData = DefaultOnNewData;
-		if (this->OnConnectionClose == nullptr)
-			this->OnConnectionClose = DefaultOnConnectionClose;
-		if (this->OnError == nullptr)
-			this->OnError = DefaultOnError;
-
+		this->ParseCallback();
 		FD_SET(this->fd, &this->socketset);
 		fd_set readableset;
 		int count, recvsize;
@@ -384,7 +370,7 @@ namespace network
 			count = select(maxfd + 1, &readableset, NULL, NULL, NULL);
 			if (count == SOCKET_ERROR)
 			{
-				this->OnError("socket error on I/O select");
+				this->onerror("socket error on I/O select");
 				return;
 			}
 			if (FD_ISSET(this->fd, &readableset))
@@ -393,14 +379,14 @@ namespace network
 				cfd = accept(this->fd, (sockaddr *)&clientaddr, &addrlen);
 				if (cfd == SOCKET_ERROR)
 				{
-					this->OnError("accept socket failed");
+					this->onerror("accept socket failed");
 					return;
 				}
 				if (cfd > maxfd)
 					maxfd = cfd;
 				this->AddSocket(cfd, clientaddr);
 				Socket &rsocket = this->GetSocket(cfd);
-				if (!this->OnNewConnection(rsocket))
+				if (!this->onnewconnection(rsocket))
 				{
 					rsocket.Close();
 					this->RemoveSocket(cfd);
@@ -427,7 +413,7 @@ namespace network
 					recvsize = rsocket.Recv(this->buffer, this->buffersize);
 					if (recvsize > 0)
 					{
-						if (!this->OnNewData(rsocket, this->buffer, recvsize))
+						if (!this->onnewdata(rsocket, this->buffer, recvsize))
 						{
 							rsocket.Close();
 							this->RemoveSocket(cfd);
@@ -436,7 +422,7 @@ namespace network
 					}
 					else
 					{
-						this->OnConnectionClose(rsocket);
+						this->onconnectionclose(rsocket);
 						this->RemoveSocket(cfd);
 						clientfdlist[i] = 0;
 					}
@@ -464,11 +450,11 @@ namespace network
 	Socket &tcp::Server::GetSocket(SocketFd cfd) { return socketmap.at(cfd); }
 
 	// return false if you want to close this connection.
-	void tcp::Server::SetOnNewConnection(bool (*onNewConnection)(const Socket &socket)) { this->OnNewConnection = onNewConnection; }
+	void tcp::Server::SetOnNewConnection(bool (*onNewConnection)(const Socket &socket)) { this->onnewconnection = onNewConnection; }
 	// return false if you want to close this connection.
-	void tcp::Server::SetOnNewData(bool (*onNewData)(const Socket &socket, char *data, int recvsize)) { this->OnNewData = onNewData; }
-	void tcp::Server::SetOnConnectionClose(void (*onConnectionClose)(const Socket &socket)) { this->OnConnectionClose = onConnectionClose; }
-	void tcp::Server::SetOnError(void (*onError)(const char *message)) { this->OnError = onError; }
+	void tcp::Server::SetOnNewData(bool (*onNewData)(const Socket &socket, char *data, int recvsize)) { this->onnewdata = onNewData; }
+	void tcp::Server::SetOnConnectionClose(void (*onConnectionClose)(const Socket &socket)) { this->onconnectionclose = onConnectionClose; }
+	void tcp::Server::SetOnError(void (*onError)(const char *message)) { this->onerror = onError; }
 
 	bool tcp::Server::DefaultOnNewConnection(const Socket &socket)
 	{
@@ -493,6 +479,18 @@ namespace network
 		static char buf[64];
 		socket.GetAddr(buf);
 		std::cout << "client closed its connection: " << buf << ':' << socket.GetPort() << std::endl;
+	}
+
+	void tcp::Server::ParseCallback()
+	{
+		if (this->onnewconnection == nullptr)
+			this->onnewconnection = DefaultOnNewConnection;
+		if (this->onnewdata == nullptr)
+			this->onnewdata = DefaultOnNewData;
+		if (this->onconnectionclose == nullptr)
+			this->onconnectionclose = DefaultOnConnectionClose;
+		if (this->onerror == nullptr)
+			this->onerror = DefaultOnError;
 	}
 
 	void tcp::Server::DefaultOnError(const char *msg) { std::cout << msg << std::endl; }

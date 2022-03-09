@@ -21,26 +21,11 @@ void Println(Args... args)
 
 #endif
 
-#include "network.hpp"
-#include <thread>
+#include <iostream>
+#include <time.hpp>
 
-int main(int argc, char **argv)
+int main()
 {
-	// const network::Socket s;
-	network::tcp::Server server("127.0.0.1", 65001);
-	if (!server.Listen())
-	{
-		Println(server.Errno());
-		return 1;
-	}
-	// server.SetOnNewData([](const network::Socket &socket, char *data, int recvsize) -> bool
-	// 					{
-	// 	data[recvsize] = 0;
-	// 	Println(data);
-	// 	 return false; });
-	// std::thread t([&server]() -> void
-	// 			  { std::this_thread::sleep_for(std::chrono::seconds(10));server.Close(); });
-	// t.detach();
-	server.Begin();
-	Println(server.Errno());
+	epoch::Time t;
+	Println(t.Format("%Y-%m-%d %H:%M:%S"));
 }
