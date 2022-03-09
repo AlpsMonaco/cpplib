@@ -42,4 +42,8 @@ int main()
 	// logs::Logger logger("test");
 	// logs::LoggerStream<logs::Logger> ls(&logger);
 	// logs::LoggerStream<logs::Logger> ls2(std::move(ls));
+	logs::Logger infologger("info");
+	logs::Logger infologger2(std::move(infologger));
+	infologger2.Write("log2");
+	infologger.Write("log");
 }

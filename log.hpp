@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <utility>
+#include <map>
 #include "time.hpp"
 
 namespace logs
@@ -34,6 +35,8 @@ namespace logs
 	class Logger
 	{
 	public:
+		Logger(const Logger &logger) = delete;
+		Logger(Logger &&logger);
 		Logger(const std::string &logname);
 		Logger(std::string &&logname);
 		~Logger();
@@ -50,8 +53,30 @@ namespace logs
 		std::ofstream ofs;
 	};
 
+	class LogManager
+	{
+	public:
+		static LogManager &GetLogManager()
+		{
+			static LogManager logmanager;
+			return logmanager;
+		}
+
+		Logger &GetLogger(const std::string &logname)
+		{
+			if (this->logmap.find(logname) == logmap.end())
+				logmap.emplace(logname, Logger(logname));
+			return logmap.at(logname);
+		}
+
+	protected:
+		LogManager() : logmap() {}
+		std::map<std::string, Logger> logmap;
+	};
+
 	Logger::Logger(const std::string &logname) : time(), logname(logname), ofs() {}
 	Logger::Logger(std::string &&logname) : time(), logname(std::forward<std::string>(logname)), ofs() {}
+	Logger::Logger(Logger &&logger) : time(logger.time), logname(std::move(logger.logname)), ofs(std::move(logger.ofs)) {}
 	Logger::~Logger() { this->Close(); }
 
 	void Logger::Write(const std::string &content)
