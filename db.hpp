@@ -103,13 +103,13 @@ namespace db
 		Rows rows;
 		if (this->mysqlres != nullptr)
 		{
-			unsigned int numFields = mysql_num_fields(this->mysqlres);
-			MYSQL_ROW mysqlRow;
-			while ((mysqlRow = mysql_fetch_row(this->mysqlres)) != NULL)
+			unsigned int numfield = mysql_num_fields(this->mysqlres);
+			MYSQL_ROW mysqlrow;
+			while ((mysqlrow = mysql_fetch_row(this->mysqlres)) != NULL)
 			{
 				Row row;
-				for (unsigned int i = 0; i < numFields; i++)
-					row.emplace_back(std::string(mysqlRow[i] ? mysqlRow[i] : ""));
+				for (unsigned int i = 0; i < numfield; i++)
+					row.emplace_back(std::string(mysqlrow[i] ? mysqlrow[i] : ""));
 				rows.emplace_back(std::move(row));
 			}
 		}

@@ -79,14 +79,12 @@ namespace network
 		class Server : public Socket
 		{
 		public:
-			using ServerCallback = void (*)(Socket &socket);
-
 			Server(const char *addr, int port, int buffersize = 1024);
 			~Server();
 
-			void SetOnNewConnection(bool (*onNewConnection)(const Socket &socket));
-			void SetOnNewData(bool (*onNewData)(const Socket &socket, char *data, int recvsize));
-			void SetOnConnectionClose(void (*onConnectionClose)(const Socket &socket));
+			void SetOnNewConnection(bool (*onnewconnection)(const Socket &socket));
+			void SetOnNewData(bool (*onnewdata)(const Socket &socket, char *data, int recvsize));
+			void SetOnConnectionClose(void (*onconnectionclose)(const Socket &socket));
 			void SetOnError(void (*onerror)(const char *message));
 			bool Listen();
 			void Begin();
@@ -450,11 +448,11 @@ namespace network
 	Socket &tcp::Server::GetSocket(SocketFd cfd) { return socketmap.at(cfd); }
 
 	// return false if you want to close this connection.
-	void tcp::Server::SetOnNewConnection(bool (*onNewConnection)(const Socket &socket)) { this->onnewconnection = onNewConnection; }
+	void tcp::Server::SetOnNewConnection(bool (*onnewconnection)(const Socket &socket)) { this->onnewconnection = onnewconnection; }
 	// return false if you want to close this connection.
-	void tcp::Server::SetOnNewData(bool (*onNewData)(const Socket &socket, char *data, int recvsize)) { this->onnewdata = onNewData; }
-	void tcp::Server::SetOnConnectionClose(void (*onConnectionClose)(const Socket &socket)) { this->onconnectionclose = onConnectionClose; }
-	void tcp::Server::SetOnError(void (*onError)(const char *message)) { this->onerror = onError; }
+	void tcp::Server::SetOnNewData(bool (*onnewdata)(const Socket &socket, char *data, int recvsize)) { this->onnewdata = onnewdata; }
+	void tcp::Server::SetOnConnectionClose(void (*onconnectionclose)(const Socket &socket)) { this->onconnectionclose = onconnectionclose; }
+	void tcp::Server::SetOnError(void (*onerror)(const char *message)) { this->onerror = onerror; }
 
 	bool tcp::Server::DefaultOnNewConnection(const Socket &socket)
 	{

@@ -22,10 +22,21 @@ void Println(Args... args)
 #endif
 
 #include <iostream>
-#include <time.hpp>
+#include <log.hpp>
+
+void Test(logs::Logger &logger)
+{
+	logger.Write("Hello World");
+	logger << "1"
+		   << "2"
+		   << "3" << logs::endl
+		   << "5";
+}
 
 int main()
 {
-	epoch::Time t;
-	Println(t.Format("%Y-%m-%d %H:%M:%S"));
+	logs::Logger("info") << "1"
+						 << "2";
+	logs::Logger("info").Write("3");
+	logs::Logger("err").Write("err");
 }

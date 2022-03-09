@@ -83,7 +83,7 @@ namespace keyboard
 {
 	using KeyCode = DWORD;
 	using KeyStatus = WPARAM;
-	using KeyboardCallback = bool (*)(KeyCode &keyCode, KeyStatus &keystatus);
+	using KeyboardCallback = bool (*)(KeyCode &keycode, KeyStatus &keystatus);
 
 	void SetKeyboardCallback(KeyboardCallback callback);
 	bool Hook();
@@ -100,11 +100,11 @@ namespace keyboard
 
 	void SetKeyboardCallback(KeyboardCallback callback) { keyboardCallback = callback; }
 
-	LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
+	LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wparam, LPARAM lparam)
 	{
-		KBDLLHOOKSTRUCT *ks = (KBDLLHOOKSTRUCT *)lParam;
-		if (keyboardCallback(ks->vkCode, wParam))
-			return CallNextHookEx(NULL, nCode, wParam, lParam);
+		KBDLLHOOKSTRUCT *ks = (KBDLLHOOKSTRUCT *)lparam;
+		if (keyboardCallback(ks->vkCode, wparam))
+			return CallNextHookEx(NULL, nCode, wparam, lparam);
 		return 1;
 	}
 

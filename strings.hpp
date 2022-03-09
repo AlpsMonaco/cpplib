@@ -11,14 +11,14 @@ namespace strings
 	std::string ReadFileAll(T &fs) { return std::string(std::istreambuf_iterator<char>(fs), std::istreambuf_iterator<char>()); }
 
 	template <typename T>
-	std::string Join(const std::vector<std::string> &stringVector, const T &t)
+	std::string Join(const std::vector<std::string> &stringlist, const T &t)
 	{
-		if (stringVector.size() == 0)
+		if (stringlist.size() == 0)
 			return "";
 		std::string result;
-		for (std::vector<std::string>::const_iterator it = stringVector.begin(); it < stringVector.end() - 1; it++)
+		for (std::vector<std::string>::const_iterator it = stringlist.begin(); it < stringlist.end() - 1; it++)
 			result += *it + t;
-		result += *(stringVector.end() - 1);
+		result += *(stringlist.end() - 1);
 		return result;
 	}
 
@@ -60,7 +60,7 @@ namespace strings
 
 	void TrimSpaceLeft(std::string &s)
 	{
-		const std::string space = " \t\r\n";
+		static const std::string space = " \t\r\n";
 		size_t size = 0;
 		for (auto it = s.begin(); it < s.end(); it++)
 		{
@@ -74,7 +74,7 @@ namespace strings
 
 	void TrimSpaceRight(std::string &s)
 	{
-		const std::string space = " \t\r\n";
+		static const std::string space = " \t\r\n";
 		size_t size = 0;
 		for (auto it = s.rbegin(); it < s.rend(); it++)
 		{

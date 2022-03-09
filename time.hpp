@@ -5,13 +5,13 @@
 
 namespace epoch
 {
-	template <size_t buffersize = 64>
-	class Time
+	template <size_t buffersize>
+	class TimeBuf
 	{
 	public:
 		static constexpr int buffersize = buffersize;
 
-		Time() : t(::time(NULL)), tm{0, 0, 0, 0, 0, 0, 0, 0, 0} { memset(this->buf, 0, buffersize); }
+		TimeBuf() : t(::time(NULL)), tm{0, 0, 0, 0, 0, 0, 0, 0, 0} { memset(this->buf, 0, buffersize); }
 
 		// update Time instance to current time.
 		void Now() { this->t = ::time(NULL); }
@@ -22,12 +22,16 @@ namespace epoch
 			return this->buf;
 		}
 
+		inline const char *StandTime() { return this->Format("%Y-%m-%d %H:%M:%S"); }
+		inline const char *StandardDate() { return this->Format("%Y-%m-%d"); }
+
 	protected:
 		time_t t;
 		tm tm;
 		char buf[buffersize];
 	};
 
+	using Time = TimeBuf<64>;
 }
 
 #endif // __TIME_HPP__
