@@ -35,8 +35,11 @@ void Test(logs::Logger &logger)
 
 int main()
 {
-	logs::Logger("info") << "1"
-						 << "2";
-	logs::Logger("info").Write("3");
-	logs::Logger("err").Write("err");
+	// logs::Logger("info") << "1"
+	// 					 << "2";
+	// logs::Logger("info").Write("3");
+	// logs::Logger("err").Write("err");
+	// logs::Logger logger("test");
+	// logs::LoggerStream<logs::Logger> ls(&logger);
+	// logs::LoggerStream<logs::Logger> ls2(std::move(ls));
 }

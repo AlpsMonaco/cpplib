@@ -20,8 +20,11 @@ namespace logs
 	public:
 		LoggerStream(LoggerStream &&loggerstream);
 		LoggerStream(const T *t, const std::string &buffer = "");
+		LoggerStream(const LoggerStream &loggerstream) = delete;
+		LoggerStream &operator=(const LoggerStream &) = delete;
 		~LoggerStream();
 		LoggerStream &operator<<(const std::string &content);
+		LoggerStream &operator=(LoggerStream &&loggerstream);
 
 	protected:
 		std::string buffer;
@@ -106,6 +109,14 @@ namespace logs
 				this->pt->Write(buffer);
 			}
 		}
+	}
+
+	template <typename T>
+	LoggerStream<T> &LoggerStream<T>::operator=(LoggerStream<T> &&rhs)
+	{
+		this->buffer(std::move(rhs.buffer));
+		this->pt = rhs.pt;
+		rhs.pt = nullptr;
 	}
 
 	template <typename T>
