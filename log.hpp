@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 #include <map>
+#include <thread>
 #include "time.hpp"
 
 namespace logs
@@ -56,11 +57,15 @@ namespace logs
 	class LogManager
 	{
 	public:
-		static LogManager &GetLogManager()
+		~LogManager() {}
+		static LogManager &Get()
 		{
 			static LogManager logmanager;
 			return logmanager;
 		}
+
+		void Put(const std::string &logname, const std::string &content) {}
+		void Put(const std::string &logname, std::string &&content) {}
 
 		Logger &GetLogger(const std::string &logname)
 		{
@@ -73,6 +78,8 @@ namespace logs
 		LogManager() : logmap() {}
 		std::map<std::string, Logger> logmap;
 	};
+
+	inline void Log(const std::string &logname, const std::string &content) { LogManager::Get().GetLogger(logname).Write(content); }
 
 	Logger::Logger(const std::string &logname) : time(), logname(logname), ofs() {}
 	Logger::Logger(std::string &&logname) : time(), logname(std::forward<std::string>(logname)), ofs() {}

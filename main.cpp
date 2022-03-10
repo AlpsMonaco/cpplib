@@ -33,8 +33,27 @@ void Test(logs::Logger &logger)
 		   << "5";
 }
 
+template <size_t n>
+class buffer
+{
+public:
+	buffer() {}
+	char *GetBuffer() { return buf; }
+
+protected:
+	char buf[n];
+};
+
+class TestClass
+{
+public:
+	TestClass() { Println("destructed"); }
+};
+
 int main()
 {
+	constexpr int i = 1;
+	buffer<i>();
 	// logs::Logger("info") << "1"
 	// 					 << "2";
 	// logs::Logger("info").Write("3");
@@ -42,8 +61,8 @@ int main()
 	// logs::Logger logger("test");
 	// logs::LoggerStream<logs::Logger> ls(&logger);
 	// logs::LoggerStream<logs::Logger> ls2(std::move(ls));
-	logs::Logger infologger("info");
-	logs::Logger infologger2(std::move(infologger));
-	infologger2.Write("log2");
-	infologger.Write("log");
+	// logs::Logger infologger("info");
+	// logs::Logger infologger2(std::move(infologger));
+	// infologger2.Write("log2");
+	// infologger.Write("log");
 }

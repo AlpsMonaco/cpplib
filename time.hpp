@@ -12,6 +12,7 @@ namespace epoch
 		static constexpr int buffersize = buffersize;
 
 		TimeBuf() : t(::time(NULL)), tm{0, 0, 0, 0, 0, 0, 0, 0, 0} { memset(this->buf, 0, buffersize); }
+		TimeBuf(const TimeBuf &rhs) : t(rhs.t), tm(rhs.tm) { memcpy(this->buf, rhs.buf, buffersize); }
 
 		// update Time instance to current time.
 		void Now() { this->t = ::time(NULL); }
