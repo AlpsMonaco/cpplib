@@ -64,9 +64,6 @@ namespace logs
 			return logmanager;
 		}
 
-		void Put(const std::string &logname, const std::string &content) {}
-		void Put(const std::string &logname, std::string &&content) {}
-
 		Logger &GetLogger(const std::string &logname)
 		{
 			if (this->logmap.find(logname) == logmap.end())
@@ -79,7 +76,7 @@ namespace logs
 		std::map<std::string, Logger> logmap;
 	};
 
-	inline void Log(const std::string &logname, const std::string &content) { LogManager::Get().GetLogger(logname).Write(content); }
+	const Logger &Log(const std::string &logname) { return LogManager::Get().GetLogger(logname); }
 
 	Logger::Logger(const std::string &logname) : time(), logname(logname), ofs() {}
 	Logger::Logger(std::string &&logname) : time(), logname(std::forward<std::string>(logname)), ofs() {}

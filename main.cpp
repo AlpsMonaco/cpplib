@@ -23,37 +23,12 @@ void Println(Args... args)
 
 #include <iostream>
 #include <log.hpp>
-
-void Test(logs::Logger &logger)
-{
-	logger.Write("Hello World");
-	logger << "1"
-		   << "2"
-		   << "3" << logs::endl
-		   << "5";
-}
-
-template <size_t n>
-class buffer
-{
-public:
-	buffer() {}
-	char *GetBuffer() { return buf; }
-
-protected:
-	char buf[n];
-};
-
-class TestClass
-{
-public:
-	TestClass() { Println("destructed"); }
-};
+#include <utility>
 
 int main()
 {
-	constexpr int i = 1;
-	buffer<i>();
+	logs::Log("info").Write("info");
+	logs::Log("err").Write("err");
 	// logs::Logger("info") << "1"
 	// 					 << "2";
 	// logs::Logger("info").Write("3");
