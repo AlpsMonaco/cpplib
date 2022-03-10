@@ -80,6 +80,7 @@ namespace network
 		{
 		public:
 			Server(const char *addr, int port, int buffersize = 1024);
+			Server(Server &&server);
 			~Server();
 
 			void SetOnNewConnection(bool (*onnewconnection)(const Socket &socket));
@@ -180,6 +181,8 @@ namespace network
 	Socket::Socket(const Socket &rhs) : addr(rhs.addr), socktype(rhs.socktype), fd(rhs.fd) {}
 	Socket::Socket(Socket &&rhs) : addr(rhs.addr), socktype(rhs.socktype), fd(rhs.fd)
 	{
+		rhs.socktype = 0;
+		rhs.fd = 0;
 		rhs.addr.sin_port = 0;
 		rhs.addr.sin_family = 0;
 		rhs.addr.sin_zero[0] = 0;
@@ -265,6 +268,17 @@ namespace network
 		FD_ZERO(&this->socketset);
 		this->buffersize = buffersize;
 		this->buffer = (char *)malloc(this->buffersize);
+	}
+
+	tcp::Server::Server(Server &&server) : Socket(std::forward<Server>(server)),
+										   socketmap(std::move(server.socketmap)),
+										   socketset(server.socketset),
+										   buffer(server.buffer),
+										   buffersize(server.buffersize)
+	{
+		memset(&server.socketset, 0, sizeof(server.socketset));
+		server.buffer = nullptr;
+		server.buffersize = 0;
 	}
 
 	tcp::Server::~Server()
