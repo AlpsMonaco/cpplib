@@ -29,7 +29,7 @@ using SOCKET = int;
 
 namespace network
 {
-	using SocketFd = SOCKET;
+	using socket_fd = SOCKET;
 	class Socket
 	{
 	public:
@@ -38,10 +38,12 @@ namespace network
 		Socket(int socktype, const sockaddr_in *paddr, int fd = 0);
 		Socket(const Socket &rhs);
 		Socket(Socket &&rhs);
+		virtual ~Socket() {}
 
 		Socket &operator=(const Socket &rhs);
 		Socket &operator=(Socket &&rhs);
 
+		socket_fd GetFd();
 		int GetPort();
 		void GetAddr(char *dst);
 		const sockaddr_in *GetSockAddr();
@@ -50,16 +52,17 @@ namespace network
 		int Send(const char *buf, int size);
 		int Recv(char *buf, int size);
 
+		socket_fd GetFd() const;
 		int GetPort() const;
 		void GetAddr(char *dst) const;
 		const sockaddr_in *GetSockAddr() const;
 		int Send(const char *buf, int size) const;
-		int Recv(char *buf, int size) const;
+		// int Recv(char *buf, int size) const;
 
 	protected:
 		sockaddr_in addr;
 		int socktype;
-		SocketFd fd;
+		socket_fd fd;
 
 		bool CreateSocket();
 	};
@@ -71,6 +74,7 @@ namespace network
 		public:
 			Client();
 			Client(const char *addr, int port);
+			~Client();
 
 			bool Connect();
 			bool Connect(const char *addr, int port);
@@ -83,33 +87,36 @@ namespace network
 			Server(Server &&server);
 			~Server();
 
-			void SetOnNewConnection(bool (*onnewconnection)(const Socket &socket));
-			void SetOnNewData(bool (*onnewdata)(const Socket &socket, char *data, int recvsize));
-			void SetOnConnectionClose(void (*onconnectionclose)(const Socket &socket));
-			void SetOnError(void (*onerror)(const char *message));
+			void SetOnNewConnection(bool (*onNewConnection)(const Socket &socket));
+			void SetOnNewData(bool (*onNewData)(const Socket &socket, char *data, int recvsize));
+			void SetOnConnectionClose(void (*onConnectionClose)(const Socket &socket));
+			void SetOnError(void (*onError)(const char *message));
 			bool Listen();
 			void Begin();
 
 		protected:
-			using SocketMap = std::map<SocketFd, Socket>;
+			using SocketMap = std::map<socket_fd, Socket>;
 
 			// return false if you want this connection to be closed after this callback;
-			bool (*onnewconnection)(const Socket &socket);
+			bool (*onNewConnection)(const Socket &socket);
 			// return false if you want this connection to be closed after this callback;
-			bool (*onnewdata)(const Socket &socket, char *data, int recvsize);
-			void (*onconnectionclose)(const Socket &socket);
-			void (*onerror)(const char *);
+			bool (*onNewData)(const Socket &socket, char *data, int recvsize);
+			void (*onConnectionClose)(const Socket &socket);
+			void (*onError)(const char *);
 
 			static bool DefaultOnNewConnection(const Socket &socket);
 			static bool DefaultOnNewData(const Socket &socket, char *data, int recvsize);
 			static void DefaultOnConnectionClose(const Socket &socket);
 			static void DefaultOnError(const char *msg);
 
+			Server &operator=(const Server &rhs) = delete;
+			Server &operator=(Server &&rhs);
+
 			void ParseCallback();
 
-			Socket &GetSocket(SocketFd cfd);
-			void AddSocket(SocketFd cfd, const sockaddr_in &sockaddr);
-			void RemoveSocket(SocketFd cfd);
+			Socket &GetSocket(socket_fd cfd);
+			void AddSocket(socket_fd cfd, const sockaddr_in &sockaddr);
+			void RemoveSocket(socket_fd cfd);
 
 			SocketMap socketmap;
 			fd_set socketset;
@@ -147,7 +154,7 @@ namespace network
 	using socklen_t = int;
 
 #else
-	inline int ioctlsocket(SocketFd fd, unsigned long int arg, u_long *val)
+	inline int ioctlsocket(socket_fd fd, unsigned long int arg, u_long *val)
 	{
 		return ioctl(fd, arg, val);
 	}
@@ -219,6 +226,8 @@ namespace network
 	}
 
 	int Socket::GetPort() const { return ntohs(this->addr.sin_port); }
+	socket_fd Socket::GetFd() const { return this->fd; }
+	socket_fd Socket::GetFd() { return const_cast<Socket &>(*this).GetFd(); }
 
 	bool Socket::CreateSocket()
 	{
@@ -234,17 +243,21 @@ namespace network
 	}
 
 	int Socket::Send(const char *buf, int bufsize) const { return send(this->fd, buf, bufsize, 0); }
-	int Socket::Recv(char *buf, int bufsize) const { return recv(fd, buf, bufsize, 0); }
+	int Socket::Recv(char *buf, int bufsize) { return recv(fd, buf, bufsize, 0); }
 	int Socket::Errno() { return GetErrno(); }
 	const sockaddr_in *Socket::GetSockAddr() const { return const_cast<const sockaddr_in *>(&this->addr); }
 
-	tcp::Client::Client() : Socket(AF_INET, SOCK_STREAM) {}
-	tcp::Client::Client(const char *addr, int port) : Socket(AF_INET, SOCK_STREAM, addr, port) {}
+	tcp::Client::~Client() { this->Close(); }
+	tcp::Client::Client(const char *addr, int port) : Socket(AF_INET, SOCK_STREAM, addr, port) { this->fd = this->CreateSocket(); }
+	tcp::Client::Client() : Socket(AF_INET, SOCK_STREAM) { this->fd = this->CreateSocket(); }
 
 	bool tcp::Client::Connect()
 	{
-		if (!this->CreateSocket())
-			return false;
+		if (this->fd == INVALID_SOCKET)
+		{
+			if (!this->CreateSocket())
+				return false;
+		}
 		return connect(this->fd, (sockaddr *)this->GetSockAddr(), SOCKADDR_IN_SIZE) != SOCKET_ERROR;
 	}
 
@@ -256,10 +269,10 @@ namespace network
 	}
 
 	tcp::Server::Server(const char *addr, int port, int buffersize) : Socket(AF_INET, SOCK_STREAM, addr, port),
-																	  onnewconnection(nullptr),
-																	  onconnectionclose(nullptr),
-																	  onnewdata(nullptr),
-																	  onerror(nullptr),
+																	  onNewConnection(nullptr),
+																	  onConnectionClose(nullptr),
+																	  onNewData(nullptr),
+																	  onError(nullptr),
 																	  socketmap(),
 																	  socketset(),
 																	  buffer(nullptr),
@@ -279,6 +292,14 @@ namespace network
 		memset(&server.socketset, 0, sizeof(server.socketset));
 		server.buffer = nullptr;
 		server.buffersize = 0;
+	}
+
+	tcp::Server &tcp::Server::operator=(Server &&rhs)
+	{
+		Socket::operator=(std::forward<Socket>(rhs));
+		memset(&rhs.socketset, 0, sizeof(rhs.socketset));
+		rhs.buffer = nullptr;
+		rhs.buffersize = 0;
 	}
 
 	tcp::Server::~Server()
@@ -310,7 +331,7 @@ namespace network
 		int status, recvsize;
 		unsigned int i;
 		sockaddr_in clientaddr;
-		SocketFd cfd;
+		socket_fd cfd;
 		int addrlen = sizeof(clientaddr);
 		for (;;)
 		{
@@ -318,7 +339,7 @@ namespace network
 			status = select(NULL, &readableset, NULL, NULL, NULL);
 			if (status == SOCKET_ERROR)
 			{
-				this->onerror("socket error on I/O select");
+				this->onError("socket error on I/O select");
 				return;
 			}
 			for (i = 0; i < readableset.fd_count; i++)
@@ -328,12 +349,12 @@ namespace network
 					cfd = accept(this->fd, (sockaddr *)&clientaddr, &addrlen);
 					if (cfd == SOCKET_ERROR)
 					{
-						this->onerror("accept socket failed");
+						this->onError("accept socket failed");
 						return;
 					}
 					this->AddSocket(cfd, clientaddr);
 					Socket &rsocket = this->GetSocket(cfd);
-					if (!this->onnewconnection(rsocket))
+					if (!this->onNewConnection(rsocket))
 					{
 						rsocket.Close();
 						this->RemoveSocket(cfd);
@@ -346,7 +367,7 @@ namespace network
 					recvsize = rsocket.Recv(this->buffer, this->buffersize);
 					if (recvsize > 0)
 					{
-						if (!this->onnewdata(rsocket, this->buffer, recvsize))
+						if (!this->onNewData(rsocket, this->buffer, recvsize))
 						{
 							rsocket.Close();
 							this->RemoveSocket(cfd);
@@ -354,7 +375,7 @@ namespace network
 					}
 					else
 					{
-						this->onconnectionclose(rsocket);
+						this->onConnectionClose(rsocket);
 						this->RemoveSocket(cfd);
 					}
 				}
@@ -372,7 +393,7 @@ namespace network
 		unsigned int i;
 		sockaddr_in clientaddr;
 		socklen_t addrlen = sizeof(clientaddr);
-		SocketFd cfd;
+		socket_fd cfd;
 		int clientfdlist[1024];
 		for (i = 0; i < 1024; i++)
 			clientfdlist[i] = 0;
@@ -382,7 +403,7 @@ namespace network
 			count = select(maxfd + 1, &readableset, NULL, NULL, NULL);
 			if (count == SOCKET_ERROR)
 			{
-				this->onerror("socket error on I/O select");
+				this->onError("socket error on I/O select");
 				return;
 			}
 			if (FD_ISSET(this->fd, &readableset))
@@ -391,14 +412,14 @@ namespace network
 				cfd = accept(this->fd, (sockaddr *)&clientaddr, &addrlen);
 				if (cfd == SOCKET_ERROR)
 				{
-					this->onerror("accept socket failed");
+					this->onError("accept socket failed");
 					return;
 				}
 				if (cfd > maxfd)
 					maxfd = cfd;
 				this->AddSocket(cfd, clientaddr);
 				Socket &rsocket = this->GetSocket(cfd);
-				if (!this->onnewconnection(rsocket))
+				if (!this->onNewConnection(rsocket))
 				{
 					rsocket.Close();
 					this->RemoveSocket(cfd);
@@ -425,7 +446,7 @@ namespace network
 					recvsize = rsocket.Recv(this->buffer, this->buffersize);
 					if (recvsize > 0)
 					{
-						if (!this->onnewdata(rsocket, this->buffer, recvsize))
+						if (!this->onNewData(rsocket, this->buffer, recvsize))
 						{
 							rsocket.Close();
 							this->RemoveSocket(cfd);
@@ -434,7 +455,7 @@ namespace network
 					}
 					else
 					{
-						this->onconnectionclose(rsocket);
+						this->onConnectionClose(rsocket);
 						this->RemoveSocket(cfd);
 						clientfdlist[i] = 0;
 					}
@@ -447,26 +468,26 @@ namespace network
 
 #endif
 
-	void tcp::Server::AddSocket(SocketFd cfd, const sockaddr_in &sockaddr)
+	void tcp::Server::AddSocket(socket_fd cfd, const sockaddr_in &sockaddr)
 	{
 		FD_SET(cfd, &this->socketset);
 		this->socketmap.emplace(cfd, Socket(SOCK_STREAM, &sockaddr, cfd));
 	}
 
-	void tcp::Server::RemoveSocket(SocketFd cfd)
+	void tcp::Server::RemoveSocket(socket_fd cfd)
 	{
 		FD_CLR(cfd, &this->socketset);
 		this->socketmap.erase(cfd);
 	}
 
-	Socket &tcp::Server::GetSocket(SocketFd cfd) { return socketmap.at(cfd); }
+	Socket &tcp::Server::GetSocket(socket_fd cfd) { return socketmap.at(cfd); }
 
 	// return false if you want to close this connection.
-	void tcp::Server::SetOnNewConnection(bool (*onnewconnection)(const Socket &socket)) { this->onnewconnection = onnewconnection; }
+	void tcp::Server::SetOnNewConnection(bool (*onNewConnection)(const Socket &socket)) { this->onNewConnection = onNewConnection; }
 	// return false if you want to close this connection.
-	void tcp::Server::SetOnNewData(bool (*onnewdata)(const Socket &socket, char *data, int recvsize)) { this->onnewdata = onnewdata; }
-	void tcp::Server::SetOnConnectionClose(void (*onconnectionclose)(const Socket &socket)) { this->onconnectionclose = onconnectionclose; }
-	void tcp::Server::SetOnError(void (*onerror)(const char *message)) { this->onerror = onerror; }
+	void tcp::Server::SetOnNewData(bool (*onNewData)(const Socket &socket, char *data, int recvsize)) { this->onNewData = onNewData; }
+	void tcp::Server::SetOnConnectionClose(void (*onConnectionClose)(const Socket &socket)) { this->onConnectionClose = onConnectionClose; }
+	void tcp::Server::SetOnError(void (*onError)(const char *message)) { this->onError = onError; }
 
 	bool tcp::Server::DefaultOnNewConnection(const Socket &socket)
 	{
@@ -495,14 +516,14 @@ namespace network
 
 	void tcp::Server::ParseCallback()
 	{
-		if (this->onnewconnection == nullptr)
-			this->onnewconnection = DefaultOnNewConnection;
-		if (this->onnewdata == nullptr)
-			this->onnewdata = DefaultOnNewData;
-		if (this->onconnectionclose == nullptr)
-			this->onconnectionclose = DefaultOnConnectionClose;
-		if (this->onerror == nullptr)
-			this->onerror = DefaultOnError;
+		if (this->onNewConnection == nullptr)
+			this->onNewConnection = DefaultOnNewConnection;
+		if (this->onNewData == nullptr)
+			this->onNewData = DefaultOnNewData;
+		if (this->onConnectionClose == nullptr)
+			this->onConnectionClose = DefaultOnConnectionClose;
+		if (this->onError == nullptr)
+			this->onError = DefaultOnError;
 	}
 
 	void tcp::Server::DefaultOnError(const char *msg) { std::cout << msg << std::endl; }
@@ -511,7 +532,7 @@ namespace network
 	void network::Socket::GetAddr(char *dst) { return const_cast<const network::Socket &>(*this).GetAddr(dst); }
 	const sockaddr_in *network::Socket::GetSockAddr() { return const_cast<const network::Socket &>(*this).GetSockAddr(); }
 	int network::Socket::Send(const char *buf, int size) { return const_cast<const network::Socket &>(*this).Send(buf, size); }
-	int network::Socket::Recv(char *buf, int size) { return const_cast<const network::Socket &>(*this).Recv(buf, size); }
+	// int network::Socket::Recv(char *buf, int size) { return const_cast<const network::Socket &>(*this).Recv(buf, size); }
 }
 
 #endif
