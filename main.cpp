@@ -1,3 +1,5 @@
+#include "network.hpp"
+
 #ifndef __PRINT_MULTI_ARGS__
 #define __PRINT_MULTI_ARGS__
 #include <iostream>
@@ -21,43 +23,13 @@ void Println(Args... args)
 
 #endif
 
-#include <iostream>
-#include <log.hpp>
-#include <utility>
-
-struct Test
+int main(int argc, char **argv)
 {
-	int i;
-	char buf[64];
-	Test()
+	network::tcp::Server s("127.0.0.1", 61111);
+	if (!s.Listen())
 	{
-		i = 0;
-		memset(buf, 0, 64);
+		Println(s.Errno());
+		return 1;
 	}
-};
-
-int main()
-{
-	Test t1;
-	t1.buf[0] = 'a';
-
-	Test t2 = t1;
-	memset(&t1, 0, sizeof(t1));
-
-	Println(t2.i);
-	Println(t2.buf);
-
-	// logs::Log("info").Write("info");
-	// logs::Log("err").Write("err");
-	// logs::Logger("info") << "1"
-	// 					 << "2";
-	// logs::Logger("info").Write("3");
-	// logs::Logger("err").Write("err");
-	// logs::Logger logger("test");
-	// logs::LoggerStream<logs::Logger> ls(&logger);
-	// logs::LoggerStream<logs::Logger> ls2(std::move(ls));
-	// logs::Logger infologger("info");
-	// logs::Logger infologger2(std::move(infologger));
-	// infologger2.Write("log2");
-	// infologger.Write("log");
+	s.Begin();
 }

@@ -227,7 +227,7 @@ namespace network
 
 	int Socket::GetPort() const { return ntohs(this->addr.sin_port); }
 	socket_fd Socket::GetFd() const { return this->fd; }
-	socket_fd Socket::GetFd() { return const_cast<Socket &>(*this).GetFd(); }
+	socket_fd Socket::GetFd() { return const_cast<const Socket &>(*this).GetFd(); }
 
 	bool Socket::CreateSocket()
 	{
@@ -300,6 +300,7 @@ namespace network
 		memset(&rhs.socketset, 0, sizeof(rhs.socketset));
 		rhs.buffer = nullptr;
 		rhs.buffersize = 0;
+		return *this;
 	}
 
 	tcp::Server::~Server()
