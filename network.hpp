@@ -57,14 +57,13 @@ namespace network
 		void GetAddr(char *dst) const;
 		const sockaddr_in *GetSockAddr() const;
 		int Send(const char *buf, int size) const;
-		// int Recv(char *buf, int size) const;
+		bool SetUnblocking();
 
 	protected:
+		bool CreateSocket();
 		sockaddr_in addr;
 		int socktype;
 		socket_fd fd;
-
-		bool CreateSocket();
 	};
 
 	namespace tcp
@@ -83,9 +82,17 @@ namespace network
 		class Server : public Socket
 		{
 		public:
-			Server(const char *addr, int port, int buffersize = 1024);
-			Server(Server &&server);
-			~Server();
+			Server(const char *addr, int port);
+			bool Listen();
+			bool Accept(Socket &socket);
+		};
+
+		class MuxServer : public Socket
+		{
+		public:
+			MuxServer(const char *addr, int port, int buffersize = 1024);
+			MuxServer(MuxServer &&server);
+			~MuxServer();
 
 			void SetOnNewConnection(bool (*onNewConnection)(const Socket &socket));
 			void SetOnNewData(bool (*onNewData)(const Socket &socket, char *data, int recvsize));
@@ -109,8 +116,8 @@ namespace network
 			static void DefaultOnConnectionClose(const Socket &socket);
 			static void DefaultOnError(const char *msg);
 
-			Server &operator=(const Server &rhs) = delete;
-			Server &operator=(Server &&rhs);
+			MuxServer &operator=(const MuxServer &rhs) = delete;
+			MuxServer &operator=(MuxServer &&rhs);
 
 			void ParseCallback();
 
@@ -183,6 +190,12 @@ namespace network
 		rhs.addr.sin_addr.s_addr = 0;
 		rhs.fd = 0;
 		return *this;
+	}
+
+	bool Socket::SetUnblocking()
+	{
+		static u_long arg = 1;
+		return ioctlsocket(this->fd, FIONBIO, &arg) == 0;
 	}
 
 	Socket::Socket(const Socket &rhs) : addr(rhs.addr), socktype(rhs.socktype), fd(rhs.fd) {}
@@ -268,33 +281,46 @@ namespace network
 		return this->Connect();
 	}
 
-	tcp::Server::Server(const char *addr, int port, int buffersize) : Socket(AF_INET, SOCK_STREAM, addr, port),
-																	  onNewConnection(nullptr),
-																	  onConnectionClose(nullptr),
-																	  onNewData(nullptr),
-																	  onError(nullptr),
-																	  socketmap(),
-																	  socketset(),
-																	  buffer(nullptr),
-																	  buffersize(0)
+	tcp::Server::Server(const char *addr, int port) : Socket(AF_INET, SOCK_STREAM, addr, port) {}
+	bool tcp::Server::Accept(Socket &socket)
+	{
+		static sockaddr_in sockAddr;
+		static int sockAddrSize = sizeof(sockAddr);
+		static int fd;
+		fd = accept(this->fd, (sockaddr *)&sockAddr, &sockAddrSize);
+		if (fd == SOCKET_ERROR)
+			return false;
+		socket = Socket(SOCK_STREAM, &sockAddr, fd);
+		return true;
+	}
+
+	tcp::MuxServer::MuxServer(const char *addr, int port, int buffersize) : Socket(AF_INET, SOCK_STREAM, addr, port),
+																			onNewConnection(nullptr),
+																			onConnectionClose(nullptr),
+																			onNewData(nullptr),
+																			onError(nullptr),
+																			socketmap(),
+																			socketset(),
+																			buffer(nullptr),
+																			buffersize(0)
 	{
 		FD_ZERO(&this->socketset);
 		this->buffersize = buffersize;
 		this->buffer = (char *)malloc(this->buffersize);
 	}
 
-	tcp::Server::Server(Server &&server) : Socket(std::forward<Server>(server)),
-										   socketmap(std::move(server.socketmap)),
-										   socketset(server.socketset),
-										   buffer(server.buffer),
-										   buffersize(server.buffersize)
+	tcp::MuxServer::MuxServer(MuxServer &&server) : Socket(std::forward<MuxServer>(server)),
+													socketmap(std::move(server.socketmap)),
+													socketset(server.socketset),
+													buffer(server.buffer),
+													buffersize(server.buffersize)
 	{
 		memset(&server.socketset, 0, sizeof(server.socketset));
 		server.buffer = nullptr;
 		server.buffersize = 0;
 	}
 
-	tcp::Server &tcp::Server::operator=(Server &&rhs)
+	tcp::MuxServer &tcp::MuxServer::operator=(MuxServer &&rhs)
 	{
 		Socket::operator=(std::forward<Socket>(rhs));
 		memset(&rhs.socketset, 0, sizeof(rhs.socketset));
@@ -303,7 +329,7 @@ namespace network
 		return *this;
 	}
 
-	tcp::Server::~Server()
+	tcp::MuxServer::~MuxServer()
 	{
 		if (this->buffer != nullptr)
 			free(this->buffer);
@@ -313,8 +339,18 @@ namespace network
 	{
 		if (!this->CreateSocket())
 			return false;
-		u_long arg = 1;
-		if (ioctlsocket(this->fd, FIONBIO, &arg))
+		if (bind(this->fd, (sockaddr *)&this->addr, SOCKADDR_IN_SIZE) == SOCKET_ERROR)
+			return false;
+		if (listen(this->fd, 10) == SOCKET_ERROR)
+			return false;
+		return true;
+	}
+
+	bool tcp::MuxServer::Listen()
+	{
+		if (!this->CreateSocket())
+			return false;
+		if (!this->SetUnblocking())
 			return false;
 		if (bind(this->fd, (sockaddr *)&this->addr, SOCKADDR_IN_SIZE) == SOCKET_ERROR)
 			return false;
@@ -324,7 +360,7 @@ namespace network
 	}
 
 #ifdef _WIN32
-	void tcp::Server::Begin()
+	void tcp::MuxServer::Begin()
 	{
 		this->ParseCallback();
 		FD_SET(this->fd, &this->socketset);
@@ -384,7 +420,7 @@ namespace network
 		}
 	}
 #else
-	void tcp::Server::Begin()
+	void tcp::MuxServer::Begin()
 	{
 		this->ParseCallback();
 		FD_SET(this->fd, &this->socketset);
@@ -469,28 +505,28 @@ namespace network
 
 #endif
 
-	void tcp::Server::AddSocket(socket_fd cfd, const sockaddr_in &sockaddr)
+	void tcp::MuxServer::AddSocket(socket_fd cfd, const sockaddr_in &sockaddr)
 	{
 		FD_SET(cfd, &this->socketset);
 		this->socketmap.emplace(cfd, Socket(SOCK_STREAM, &sockaddr, cfd));
 	}
 
-	void tcp::Server::RemoveSocket(socket_fd cfd)
+	void tcp::MuxServer::RemoveSocket(socket_fd cfd)
 	{
 		FD_CLR(cfd, &this->socketset);
 		this->socketmap.erase(cfd);
 	}
 
-	Socket &tcp::Server::GetSocket(socket_fd cfd) { return socketmap.at(cfd); }
+	Socket &tcp::MuxServer::GetSocket(socket_fd cfd) { return socketmap.at(cfd); }
 
 	// return false if you want to close this connection.
-	void tcp::Server::SetOnNewConnection(bool (*onNewConnection)(const Socket &socket)) { this->onNewConnection = onNewConnection; }
+	void tcp::MuxServer::SetOnNewConnection(bool (*onNewConnection)(const Socket &socket)) { this->onNewConnection = onNewConnection; }
 	// return false if you want to close this connection.
-	void tcp::Server::SetOnNewData(bool (*onNewData)(const Socket &socket, char *data, int recvsize)) { this->onNewData = onNewData; }
-	void tcp::Server::SetOnConnectionClose(void (*onConnectionClose)(const Socket &socket)) { this->onConnectionClose = onConnectionClose; }
-	void tcp::Server::SetOnError(void (*onError)(const char *message)) { this->onError = onError; }
+	void tcp::MuxServer::SetOnNewData(bool (*onNewData)(const Socket &socket, char *data, int recvsize)) { this->onNewData = onNewData; }
+	void tcp::MuxServer::SetOnConnectionClose(void (*onConnectionClose)(const Socket &socket)) { this->onConnectionClose = onConnectionClose; }
+	void tcp::MuxServer::SetOnError(void (*onError)(const char *message)) { this->onError = onError; }
 
-	bool tcp::Server::DefaultOnNewConnection(const Socket &socket)
+	bool tcp::MuxServer::DefaultOnNewConnection(const Socket &socket)
 	{
 		static char buf[64];
 		socket.GetAddr(buf);
@@ -498,7 +534,7 @@ namespace network
 		return true;
 	}
 
-	bool tcp::Server::DefaultOnNewData(const Socket &socket, char *data, int recvsize)
+	bool tcp::MuxServer::DefaultOnNewData(const Socket &socket, char *data, int recvsize)
 	{
 		static char buf[64];
 		socket.GetAddr(buf);
@@ -508,14 +544,14 @@ namespace network
 		return true;
 	}
 
-	void tcp::Server::DefaultOnConnectionClose(const Socket &socket)
+	void tcp::MuxServer::DefaultOnConnectionClose(const Socket &socket)
 	{
 		static char buf[64];
 		socket.GetAddr(buf);
 		std::cout << "client closed its connection: " << buf << ':' << socket.GetPort() << std::endl;
 	}
 
-	void tcp::Server::ParseCallback()
+	void tcp::MuxServer::ParseCallback()
 	{
 		if (this->onNewConnection == nullptr)
 			this->onNewConnection = DefaultOnNewConnection;
@@ -527,7 +563,7 @@ namespace network
 			this->onError = DefaultOnError;
 	}
 
-	void tcp::Server::DefaultOnError(const char *msg) { std::cout << msg << std::endl; }
+	void tcp::MuxServer::DefaultOnError(const char *msg) { std::cout << msg << std::endl; }
 
 	int network::Socket::GetPort() { return const_cast<const network::Socket &>(*this).GetPort(); }
 	void network::Socket::GetAddr(char *dst) { return const_cast<const network::Socket &>(*this).GetAddr(dst); }
