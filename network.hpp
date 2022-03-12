@@ -74,7 +74,7 @@ namespace network
 		public:
 			Client();
 			Client(const char *addr, int port);
-			~Client();
+			// ~Client();
 
 			bool Connect();
 			bool Connect(const char *addr, int port);
@@ -247,9 +247,9 @@ namespace network
 	int Socket::Errno() { return GetErrno(); }
 	const sockaddr_in *Socket::GetSockAddr() const { return const_cast<const sockaddr_in *>(&this->addr); }
 
-	tcp::Client::~Client() { this->Close(); }
-	tcp::Client::Client(const char *addr, int port) : Socket(AF_INET, SOCK_STREAM, addr, port) { this->fd = this->CreateSocket(); }
-	tcp::Client::Client() : Socket(AF_INET, SOCK_STREAM) { this->fd = this->CreateSocket(); }
+	// tcp::Client::~Client() { this->Close(); }
+	tcp::Client::Client(const char *addr, int port) : Socket(AF_INET, SOCK_STREAM, addr, port) { this->CreateSocket(); }
+	tcp::Client::Client() : Socket(AF_INET, SOCK_STREAM) { this->CreateSocket(); }
 
 	bool tcp::Client::Connect()
 	{
