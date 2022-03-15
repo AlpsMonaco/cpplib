@@ -31,5 +31,4 @@ int main(int argc, char **argv)
 		Println(s.Errno());
 		return 1;
 	}
-	s.Begin();
 }
